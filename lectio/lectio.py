@@ -28,7 +28,7 @@ class Lectio:
 
             from lectiotools import Lectio
 
-            lect = Lectio("123")
+            lect = Lectio(123)
 
             if lect.authenticate("username", "password"):
                 print("Authenticated")
