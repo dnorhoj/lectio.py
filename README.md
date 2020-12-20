@@ -30,4 +30,4 @@ If you notice something that isn't working as intended you can start an issue.
 
 ## License
 
-This repository uses the `GNU General Public License v3` you can read more about it in [LICENSE](LICENSE).
+This repository uses the `GNU Lesser General Public License v3.0` you can read more about it in [LICENSE](LICENSE).
