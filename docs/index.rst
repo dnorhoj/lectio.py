@@ -1,4 +1,4 @@
-Welcome to lectiotools's documentation!
+Welcome to lectio.py's documentation!
 =======================================
 
 .. toctree::
