@@ -166,21 +166,22 @@ class Lectio:
                 unparsed_time[1]+unparsed_time[3], "%d/%m-%Y %H:%M")
         
         # Parse subject
-        module.subject = re.search(r"Hold: (.*)", unparsed_module)[1]
+        subject = re.search(r"Hold: (.*)", unparsed_module)
+        module.subject = subject[1] if subject else None
 
         # Parse teacher
         teacher = re.search(r"Lærer: (.*)", unparsed_module)
-        if teacher:
-            module.teacher = teacher[1]
-        else:
-            module.teacher = re.search(r"Lærere: (.*)", unparsed_module)[1]
+        if not teacher:
+            teacher = re.search(r"Lærere: (.*)", unparsed_module)[1]
+
+        module.teacher = teacher[1] if teacher else None
 
         # Parse room
         room = re.search(r"Lokale: (.*)", unparsed_module)
-        if room:
-            module.room = room[1]
-        else:
-            module.room = re.search(r"Lokaler: (.*)", unparsed_module)[1]
+        if not room:
+            room = re.search(r"Lokaler: (.*)", unparsed_module)
+        
+        module.room = room[1] if room else None
 
         # TODO: Parse extra info
 
