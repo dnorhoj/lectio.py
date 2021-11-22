@@ -172,7 +172,7 @@ class Lectio:
         # Parse teacher
         teacher = re.search(r"Lærer: (.*)", unparsed_module)
         if not teacher:
-            teacher = re.search(r"Lærere: (.*)", unparsed_module)[1]
+            teacher = re.search(r"Lærere: (.*)", unparsed_module)
 
         module.teacher = teacher[1] if teacher else None
 
