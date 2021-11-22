@@ -175,7 +175,14 @@ class Lectio:
         else:
             module.teacher = re.search(r"Lærere: (.*)", unparsed_module)[1]
 
-        # TODO: Parse room and extra info
+        # Parse room
+        room = re.search(r"Lokale: (.*)", unparsed_module)
+        if room:
+            module.room = room[1]
+        else:
+            module.room = re.search(r"Lokaler: (.*)", unparsed_module)[1]
+
+        # TODO: Parse extra info
 
         return module
 

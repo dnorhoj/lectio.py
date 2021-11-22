@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="lectio.py",
-    version="0.0.1",
+    version="0.0.2",
     author="dnorhoj",
     author_email="daniel.norhoj@gmail.com",
     description="Interact with lectio through python",
