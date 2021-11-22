@@ -18,9 +18,9 @@ To use this repository feel free to check the documentation [here](https://lecti
 
 ## Todo
 
-[ ] Finish authentication check
-[ ] Make a better README
-* Start doing the hard part (basically everything)
+* [ ] Finish authentication check
+* [ ] Make a better README
+* [ ] Start doing the hard part (basically everything)
 
 ## Contributing
 
