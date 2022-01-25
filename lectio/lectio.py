@@ -20,6 +20,7 @@ class Module:
         extra_info (str): Extra info from module, includes homework and other info.
         start_time (:class:`datetime.datetime`): Start time of module
         end_time (:class:`datetime.datetime`): End time of module
+        is_cancelled (bool): True if the module is cancelled
     """
 
     def __init__(self, **kwargs) -> None:
@@ -30,6 +31,7 @@ class Module:
         self.extra_info = kwargs.get("extra_info")
         self.start_time = kwargs.get("start_time")
         self.end_time = kwargs.get("end_time")
+        self.is_cancelled = kwargs.get("is_cancelled")
 
 
 class Lectio:
@@ -182,6 +184,9 @@ class Lectio:
             room = re.search(r"Lokaler: (.*)", unparsed_module)
         
         module.room = room[1] if room else None
+
+        # Parse if module is cancelled
+        module.is_cancelled = 's2cancelled' in module_soup['class']
 
         # TODO: Parse extra info
 
