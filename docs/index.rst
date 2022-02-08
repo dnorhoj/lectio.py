@@ -8,3 +8,4 @@ Welcome to lectio.py's documentation!
    installation
    quickstart
    reference
+   exceptions
