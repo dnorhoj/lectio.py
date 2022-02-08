@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -21,7 +21,7 @@ class Module:
         extra_info (str): Extra info from module, includes homework and other info.
         start_time (:class:`datetime.datetime`): Start time of module
         end_time (:class:`datetime.datetime`): End time of module
-        is_cancelled (bool): True if the module is cancelled
+        status (int): 0=normal, 1=changed, 2=cancelled
     """
 
     def __init__(self, **kwargs) -> None:
@@ -32,7 +32,7 @@ class Module:
         self.extra_info = kwargs.get("extra_info")
         self.start_time = kwargs.get("start_time")
         self.end_time = kwargs.get("end_time")
-        self.is_cancelled = kwargs.get("is_cancelled")
+        self.status = kwargs.get("status")
 
 
 class Lectio:
@@ -153,79 +153,117 @@ class Lectio:
 
         return user_id
 
-    def get_schedule_for_student(self, elevid: int, weekno: int = None) -> any:
+    def get_schedule_for_student(self, elevid: int, start_date: datetime, end_date: datetime, strip_time: bool = True) -> any:
         """Get lectio schedule for current or specific week.
 
-        Get all modules for a week.
+        Get all modules in specified time range.
 
         Parameters:
             elevid (int): Student id
-            weekno (int): Week number
+            start_date (:class:`datetime.datetime`): Start date
+            end_date (:class:`datetime.datetime`): End date
+            strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
+                Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
 
         Returns:
-            list: Two dimensional list which contains all the days of the week, and all the corresponding modules for each day.
+            list: List containing all modules in specified time range.
         """
 
+        replacetime = {}
+        if strip_time:
+            end_date = end_date + timedelta(days=1)
+            replacetime = {
+                "hour": 0,
+                "minute": 0,
+                "second": 0,
+            }
+
+        start_date = start_date.replace(
+            **replacetime, microsecond=0).isoformat()
+        end_date = end_date.replace(**replacetime, microsecond=0).isoformat()
+
+        params = (
+            "type=ShowListAll&"
+            f"starttime={start_date}&"
+            f"endtime={end_date}&"
+            "dagsbemaerk=0&"
+            f"studentsel={elevid}"
+        )
+
         schedule_request = self._request(
-            f"{self.__BASE_URL}/SkemaNy.aspx?type=elev&elevid={str(elevid)}")
+            f"{self.__BASE_URL}/SkemaAvanceret.aspx?{params}")
 
         soup = BeautifulSoup(schedule_request.text, 'html.parser')
-        days = soup.find_all(
-            "div", class_="s2skemabrikcontainer lec-context-menu-instance")
+
+        modules = soup.find(
+            "table", class_="list texttop lf-grid").findChildren('tr', class_=None)
 
         schedule = []
-        for day in days:
-            day_list = []
-            for module_soup in day.findChildren("a", recursive=False):
-                day_list.append(self._parse_module(module_soup))
-            schedule.append(day_list)
+        for module in modules:
+            info = module.findChild('a').attrs.get('data-additionalinfo')
+            schedule.append(self._parse_additionalinfo(info))
 
         return schedule
 
-    def _parse_module(self, module_soup) -> Module:
+    def _parse_additionalinfo(self, info: str) -> Module:
         module = Module()
 
-        unparsed_module = module_soup["data-additionalinfo"]
+        info_list = info.split('\n')
 
-        # Find module name
-        title = module_soup.find(
-            'span', attrs={"style": "word-wrap:break-word;"})
+        # Parse module status
+        if info_list[0] == 'Ændret!':
+            module.status = 1
+            info_list.pop(0)
+        elif info_list[0] == 'Aflyst!':
+            module.status = 2
+            info_list.pop(0)
+        else:
+            module.status = 0
+        
+        print(f"Status: {module.status}")
 
-        module.title = title.text if title else None
+        # Parse title
+        if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):
+            module.title = info_list[0]
+            info_list.pop(0)
+        
+        print(f"Title: {module.title}")
 
         # Parse time
-        unparsed_time = re.search(
-            r"([0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} )([0-9]{2}:[0-9]{2}) til ([0-9]{2}:[0-9]{2})", unparsed_module)
+        times = info_list[0].split(" til ")
+        module.start_time = datetime.strptime(times[0], "%d/%m-%Y %H:%M")
+        if len(times[1]) == 5:
+            module.end_time = datetime.strptime(times[0][:-5] + times[1], "%d/%m-%Y %H:%M")
+        else:
+            module.end_time = datetime.strptime(times[1], "%d/%m-%Y %H:%M")
+        
+        print(f"Start time: {module.start_time}")
+        print(f"End time: {module.end_time}")
 
-        if unparsed_time:
-            module.start_time = datetime.strptime(
-                unparsed_time[1] + unparsed_time[2], "%d/%m-%Y %H:%M")
-            module.end_time = datetime.strptime(
-                unparsed_time[1] + unparsed_time[3], "%d/%m-%Y %H:%M")
+        # Parse subject(s)
+        subject = re.search(r"Hold: (.*)", info)
+        if subject:
+            module.subject = subject[1]
 
-        # Parse subject
-        subject = re.search(r"Hold: (.*)", unparsed_module)
-        module.subject = subject[1] if subject else None
+        print(f"Subject: {module.subject}")
+        
+        # Parse teacher(s)
+        teacher = re.search(r"Lærere?: (.*)", info)
+        if teacher:
+            module.teacher = teacher[1]
 
-        # Parse teacher
-        teacher = re.search(r"Lærer: (.*)", unparsed_module)
-        if not teacher:
-            teacher = re.search(r"Lærere: (.*)", unparsed_module)
+        print(f"Teacher: {module.teacher}")
+        
+        # Parse room(s)
+        room = re.search(r"Lokaler?: (.*)", info)
+        if room:
+            module.room = room[1]
 
-        module.teacher = teacher[1] if teacher else None
+        print(f"Room: {module.room}")
 
-        # Parse room
-        room = re.search(r"Lokale: (.*)", unparsed_module)
-        if not room:
-            room = re.search(r"Lokaler: (.*)", unparsed_module)
-
-        module.room = room[1] if room else None
-
-        # Parse if module is cancelled
-        module.is_cancelled = 's2cancelled' in module_soup['class']
-
+        print("\n")
         # TODO: Parse extra info
-
+        
         return module
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
