@@ -22,6 +22,7 @@ class Module:
         start_time (:class:`datetime.datetime`): Start time of module
         end_time (:class:`datetime.datetime`): End time of module
         status (int): 0=normal, 1=changed, 2=cancelled
+        url (str): Url for more info for the module
     """
 
     def __init__(self, **kwargs) -> None:
@@ -33,6 +34,18 @@ class Module:
         self.start_time = kwargs.get("start_time")
         self.end_time = kwargs.get("end_time")
         self.status = kwargs.get("status")
+        self.url = kwargs.get("url")
+
+    def display(self):
+        print(f"Title:      {self.title}")
+        print(f"Subject(s): {self.subject}")
+        print(f"Teacher(s): {self.teacher}")
+        print(f"Room(s):    {self.room}")
+        print(f"Starts at:  {self.start_time}")
+        print(f"Ends at:    {self.end_time}")
+        print(f"Status:     {self.status}")
+        print(f"URL:        {self.url}")
+        print(f"Extra info:\n\n{self.extra_info}")
 
 
 class Lectio:
@@ -200,8 +213,11 @@ class Lectio:
 
         schedule = []
         for module in modules:
-            info = module.findChild('a').attrs.get('data-additionalinfo')
-            schedule.append(self._parse_additionalinfo(info))
+            a = module.findChild('a')
+            module = self._parse_additionalinfo(
+                a.attrs.get('data-additionalinfo'))
+            module.url = f"https://www.lectio.dk{a.attrs.get('href')}"
+            schedule.append(module)
 
         return schedule
 
@@ -219,51 +235,45 @@ class Lectio:
             info_list.pop(0)
         else:
             module.status = 0
-        
-        print(f"Status: {module.status}")
 
         # Parse title
         if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):
             module.title = info_list[0]
             info_list.pop(0)
-        
-        print(f"Title: {module.title}")
 
         # Parse time
         times = info_list[0].split(" til ")
+        info_list.pop(0)
         module.start_time = datetime.strptime(times[0], "%d/%m-%Y %H:%M")
         if len(times[1]) == 5:
-            module.end_time = datetime.strptime(times[0][:-5] + times[1], "%d/%m-%Y %H:%M")
+            module.end_time = datetime.strptime(
+                times[0][:-5] + times[1], "%d/%m-%Y %H:%M")
         else:
             module.end_time = datetime.strptime(times[1], "%d/%m-%Y %H:%M")
-        
-        print(f"Start time: {module.start_time}")
-        print(f"End time: {module.end_time}")
 
         # Parse subject(s)
         subject = re.search(r"Hold: (.*)", info)
         if subject:
+            info_list.pop(0)
             module.subject = subject[1]
 
-        print(f"Subject: {module.subject}")
-        
         # Parse teacher(s)
         teacher = re.search(r"Lærere?: (.*)", info)
         if teacher:
+            info_list.pop(0)
             module.teacher = teacher[1]
 
-        print(f"Teacher: {module.teacher}")
-        
         # Parse room(s)
         room = re.search(r"Lokaler?: (.*)", info)
         if room:
+            info_list.pop(0)
             module.room = room[1]
 
-        print(f"Room: {module.room}")
+        # Put any additional info into extra_info
+        if info_list:
+            info_list.pop(0)
+            module.extra_info = "\n".join(info_list)
 
-        print("\n")
-        # TODO: Parse extra info
-        
         return module
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
