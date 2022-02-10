@@ -1,6 +1,6 @@
 API Reference
 =============
 
-.. automodule:: lectio
+.. automodule:: lectio.lectio
     :members:
     :undoc-members:

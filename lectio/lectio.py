@@ -1,7 +1,8 @@
-import requests
+from datetime import datetime, timedelta
 import re
-from datetime import datetime
+import requests
 from bs4 import BeautifulSoup
+from . import exceptions
 
 
 class Module:
@@ -20,7 +21,8 @@ class Module:
         extra_info (str): Extra info from module, includes homework and other info.
         start_time (:class:`datetime.datetime`): Start time of module
         end_time (:class:`datetime.datetime`): End time of module
-        is_cancelled (bool): True if the module is cancelled
+        status (int): 0=normal, 1=changed, 2=cancelled
+        url (str): Url for more info for the module
     """
 
     def __init__(self, **kwargs) -> None:
@@ -31,7 +33,19 @@ class Module:
         self.extra_info = kwargs.get("extra_info")
         self.start_time = kwargs.get("start_time")
         self.end_time = kwargs.get("end_time")
-        self.is_cancelled = kwargs.get("is_cancelled")
+        self.status = kwargs.get("status")
+        self.url = kwargs.get("url")
+
+    def display(self):
+        print(f"Title:      {self.title}")
+        print(f"Subject(s): {self.subject}")
+        print(f"Teacher(s): {self.teacher}")
+        print(f"Room(s):    {self.room}")
+        print(f"Starts at:  {self.start_time}")
+        print(f"Ends at:    {self.end_time}")
+        print(f"Status:     {self.status}")
+        print(f"URL:        {self.url}")
+        print(f"Extra info:\n\n{self.extra_info}")
 
 
 class Lectio:
@@ -42,7 +56,8 @@ class Lectio:
     Args:
         inst_id (int): Your Lectio institution id.
 
-            You can find this by going to your institution's Lectio login page and it should be in the URL like this::
+            You can find this by going to your institution's Lectio login
+            page and it should be in the URL like this::
 
                 https://www.lectio.dk/lectio/123/login.aspx
 
@@ -52,11 +67,12 @@ class Lectio:
     def __init__(self, inst_id: int) -> None:
         self.__INST_ID = inst_id
         self.__BASE_URL = f"https://www.lectio.dk/lectio/{str(inst_id)}"
+        self.__CREDS = []
 
         self.__session = requests.Session()
         # TODO: Check if inst_id is valid
 
-    def authenticate(self, username: str, password: str) -> bool:
+    def authenticate(self, username: str, password: str, save_creds: bool = True) -> bool:
         """Authenticates you on Lectio.
 
         Note:
@@ -72,33 +88,53 @@ class Lectio:
         Args:
             username (str): Lectio username for the given institution id.
             password (str): Lectio password for the given institution id.
+            save_creds (bool): Whether the credentials should be saved in the object (useful for auto relogin on logout)
 
-        Returns:
-            bool: Whether authentication was succesful or not.
+        Raises:
+            lectio.IncorrectCredentialsError: When incorrect credentials passed
 
         Example::
 
-            from lectiotools import Lectio
+            from lectio import Lectio, errors
 
             lect = Lectio(123)
 
-            if lect.authenticate("username", "password"):
+            try:
+                lect.authenticate("username", "password"):
                 print("Authenticated")
-            else:
+            except errors.IncorrectCredentialsError:
                 print("Not authenticated")
         """
 
-        self.log_out()
+        self.__CREDS = []
+        if save_creds:
+            self.__CREDS = [username, password]
 
-        login_page = self.__session.get(self.__BASE_URL+"/login.aspx")
+        # Call the actual authentication method
+        self._authenticate(username, password)
+
+        # Check if authentication passed
+        self._request(self.__BASE_URL + "/forside.aspx")
+
+    def _authenticate(self, username: str = None, password: str = None) -> bool:
+        if username is None or password is None:
+            if len(self.__CREDS) != 2:
+                raise exceptions.UnauthenticatedError(
+                    "Auto auth failed, did you authenticate?")
+
+            username, password = self.__CREDS
+
+        self.log_out()  # Clear session
+
+        login_page = self.__session.get(self.__BASE_URL + "/login.aspx")
 
         if login_page.status_code != 200:
             return False
 
         parser = BeautifulSoup(login_page.text, "html.parser")
 
-        res = self.__session.post(
-            self.__BASE_URL+"/login.aspx",
+        self.__session.post(
+            self.__BASE_URL + "/login.aspx",
             data={
                 "time": 0,
                 "__EVENTTARGET": "m$Content$submitbtn2",
@@ -113,87 +149,145 @@ class Lectio:
             }
         )
 
-        # TODO: Check if login was successfull
+    def get_user_id(self) -> int:
+        """Gets your user id
 
-        return True
+        Returns:
+            int: User id
+        """
 
-    def get_schedule_for_student(self, elevid: int, weekno: int = None) -> Module:
+        r = self._request(self.__BASE_URL + "/forside.aspx")
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        content = soup.find(
+            'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
+
+        user_id = int(re.match(r'.*id=([0-9]+)$', content)[1])
+
+        return user_id
+
+    def get_schedule_for_student(self, elevid: int, start_date: datetime, end_date: datetime, strip_time: bool = True) -> any:
         """Get lectio schedule for current or specific week.
 
-        Get all modules for a week.
+        Get all modules in specified time range.
 
         Parameters:
             elevid (int): Student id
-            weekno (int): Week number
+            start_date (:class:`datetime.datetime`): Start date
+            end_date (:class:`datetime.datetime`): End date
+            strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
+                Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
 
         Returns:
-            list: Two dimensional list which contains all the days of the week, and all the corresponding modules for each day.
+            list: List containing all modules in specified time range.
         """
 
-        schedule_request = self._get(
-            f"{self.__BASE_URL}/SkemaNy.aspx?type=elev&elevid={str(elevid)}")
+        replacetime = {}
+        if strip_time:
+            end_date = end_date + timedelta(days=1)
+            replacetime = {
+                "hour": 0,
+                "minute": 0,
+                "second": 0,
+            }
+
+        start_date = start_date.replace(
+            **replacetime, microsecond=0).isoformat()
+        end_date = end_date.replace(**replacetime, microsecond=0).isoformat()
+
+        params = (
+            "type=ShowListAll&"
+            f"starttime={start_date}&"
+            f"endtime={end_date}&"
+            "dagsbemaerk=0&"
+            f"studentsel={elevid}"
+        )
+
+        schedule_request = self._request(
+            f"{self.__BASE_URL}/SkemaAvanceret.aspx?{params}")
 
         soup = BeautifulSoup(schedule_request.text, 'html.parser')
-        days = soup.find_all(
-            "div", class_="s2skemabrikcontainer lec-context-menu-instance")
+
+        modules = soup.find(
+            "table", class_="list texttop lf-grid").findChildren('tr', class_=None)
 
         schedule = []
-        for day in days:
-            day_list = []
-            for module_soup in day.findChildren("a", recursive=False):
-                day_list.append(self._parse_module(module_soup))
-            schedule.append(day_list)
+        for module in modules:
+            a = module.findChild('a')
+            module = self._parse_additionalinfo(
+                a.attrs.get('data-additionalinfo'))
+            module.url = f"https://www.lectio.dk{a.attrs.get('href')}"
+            schedule.append(module)
 
         return schedule
 
-    def _parse_module(self, module_soup) -> Module:
+    def _parse_additionalinfo(self, info: str) -> Module:
         module = Module()
 
-        unparsed_module = module_soup["data-additionalinfo"]
+        info_list = info.split('\n')
 
-        # Find module name
-        title = module_soup.find(
-            'span', attrs={"style": "word-wrap:break-word;"})
+        # Parse module status
+        if info_list[0] == 'Ændret!':
+            module.status = 1
+            info_list.pop(0)
+        elif info_list[0] == 'Aflyst!':
+            module.status = 2
+            info_list.pop(0)
+        else:
+            module.status = 0
 
-        module.title = title.text if title else None
+        # Parse title
+        if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):
+            module.title = info_list[0]
+            info_list.pop(0)
 
         # Parse time
-        unparsed_time = re.search(
-            r"([0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} )([0-9]{2}:[0-9]{2}) til ([0-9]{2}:[0-9]{2})", unparsed_module)
-            
-        if unparsed_time:
-            module.start_time = datetime.strptime(
-                unparsed_time[1]+unparsed_time[2], "%d/%m-%Y %H:%M")
+        times = info_list[0].split(" til ")
+        info_list.pop(0)
+        module.start_time = datetime.strptime(times[0], "%d/%m-%Y %H:%M")
+        if len(times[1]) == 5:
             module.end_time = datetime.strptime(
-                unparsed_time[1]+unparsed_time[3], "%d/%m-%Y %H:%M")
-        
-        # Parse subject
-        subject = re.search(r"Hold: (.*)", unparsed_module)
-        module.subject = subject[1] if subject else None
+                times[0][:-5] + times[1], "%d/%m-%Y %H:%M")
+        else:
+            module.end_time = datetime.strptime(times[1], "%d/%m-%Y %H:%M")
 
-        # Parse teacher
-        teacher = re.search(r"Lærer: (.*)", unparsed_module)
-        if not teacher:
-            teacher = re.search(r"Lærere: (.*)", unparsed_module)
+        # Parse subject(s)
+        subject = re.search(r"Hold: (.*)", info)
+        if subject:
+            info_list.pop(0)
+            module.subject = subject[1]
 
-        module.teacher = teacher[1] if teacher else None
+        # Parse teacher(s)
+        teacher = re.search(r"Lærere?: (.*)", info)
+        if teacher:
+            info_list.pop(0)
+            module.teacher = teacher[1]
 
-        # Parse room
-        room = re.search(r"Lokale: (.*)", unparsed_module)
-        if not room:
-            room = re.search(r"Lokaler: (.*)", unparsed_module)
-        
-        module.room = room[1] if room else None
+        # Parse room(s)
+        room = re.search(r"Lokaler?: (.*)", info)
+        if room:
+            info_list.pop(0)
+            module.room = room[1]
 
-        # Parse if module is cancelled
-        module.is_cancelled = 's2cancelled' in module_soup['class']
-
-        # TODO: Parse extra info
+        # Put any additional info into extra_info
+        if info_list:
+            info_list.pop(0)
+            module.extra_info = "\n".join(info_list)
 
         return module
 
-    def _get(self, url: str) -> requests.Response:
-        return self.__session.get(url)
+    def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
+        r = self.__session.request(method, url, **kwargs)
+
+        if f"{self.__INST_ID}/login.aspx?prevurl=" in r.url:
+            self._authenticate()
+            r = self.__session.get(url)
+            if f"{self.__INST_ID}/login.aspx?prevurl=" in r.url:
+                raise exceptions.IncorrectCredentialsError(
+                    "Could not restore session, probably incorrect credentials")
+
+        return r
 
     def log_out(self) -> None:
         """Clears entire session, thereby logging you out

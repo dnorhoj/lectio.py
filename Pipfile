@@ -8,3 +8,7 @@ requests = "*"
 beautifulsoup4 = "*"
 
 [dev-packages]
+autopep8 = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+flake8 = "*"
