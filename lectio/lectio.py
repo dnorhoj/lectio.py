@@ -95,13 +95,14 @@ class Lectio:
 
         Example::
 
-            from lectio import Lectio
+            from lectio import Lectio, errors
 
             lect = Lectio(123)
 
-            if lect.authenticate("username", "password"):
+            try:
+                lect.authenticate("username", "password"):
                 print("Authenticated")
-            else:
+            except errors.IncorrectCredentialsError:
                 print("Not authenticated")
         """
 
