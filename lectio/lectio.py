@@ -76,10 +76,6 @@ class Lectio:
         """Authenticates you on Lectio.
 
         Note:
-            Functionality is not completely implemented.
-            Cannot check if authentication was successfull.
-
-        Note:
             Running :py:func:`authenticate` on an already authenticated object
             will log you out of the already authenticated user.
 
