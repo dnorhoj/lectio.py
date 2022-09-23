@@ -11,18 +11,18 @@ class Module:
     Represents a lectio module
 
     Args:
-        title (str): Optional description of module (not present in all modules)
-        subject (str): "Hold" from lectio, bascially which subject.
+        title (str|None): Optional description of module (not present in all modules)
+        subject (str|None): "Hold" from lectio, bascially which subject.
             Example: `1.a Da`
-        teacher (str): Initials of teacher.
+        teacher (str|None): Initials of teacher.
             Example: `abcd`
-        room (str): Room name of module.
+        room (str|None): Room name of module.
             Example: `0.015`
-        extra_info (str): Extra info from module, includes homework and other info.
+        extra_info (str|None): Extra info from module, includes homework and other info.
         start_time (:class:`datetime.datetime`): Start time of module
         end_time (:class:`datetime.datetime`): End time of module
         status (int): 0=normal, 1=changed, 2=cancelled
-        url (str): Url for more info for the module
+        url (str|None): Url for more info for the module
     """
 
     def __init__(self, **kwargs) -> None:
@@ -213,7 +213,10 @@ class Lectio:
             a = module.findChild('a')
             module = self._parse_additionalinfo(
                 a.attrs.get('data-additionalinfo'))
-            module.url = f"https://www.lectio.dk{a.attrs.get('href')}"
+            
+            href = a.attrs.get('href')
+            if href is not None:
+                module.url = f"https://www.lectio.dk{a.attrs.get('href')}"
             schedule.append(module)
 
         return schedule
