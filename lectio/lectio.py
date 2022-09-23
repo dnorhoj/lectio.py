@@ -216,7 +216,7 @@ class Lectio:
             
             href = a.attrs.get('href')
             if href is not None:
-                module.url = f"https://www.lectio.dk{a.attrs.get('href')}"
+                module.url = f"https://www.lectio.dk{href}"
             schedule.append(module)
 
         return schedule
