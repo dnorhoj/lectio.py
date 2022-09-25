@@ -18,11 +18,26 @@ You can read the documentation
 
 To use this repository feel free to check the documentation [here](https://lectiopy.rtfd.io/).
 
+## Progress
+
+<details>
+    <summary>Implementation progress</summary>
+
+* [x] Schedule
+* [x] User info
+* [ ] Absence
+* [ ] Mail
+* [ ] Assignments
+* [ ] Homework
+* [ ] Surveys (Probably not going to be implemented)
+* [ ] Grades
+* [ ] Search for students / teachers
+
+</details>
+
 ## Todo
 
-* [ ] Finish authentication check
 * [ ] Make a better README
-* [ ] Start doing the hard part (basically everything)
 
 ## Known bugs
 
