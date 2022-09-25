@@ -15,3 +15,6 @@ class IncorrectCredentialsError(LectioError):
 
 class InstitutionDoesNotExistError(LectioError):
     """The institution with the id you provided does not exist."""
+
+class UserDoesNotExistError(LectioError):
+    """The user does not exist."""

@@ -24,6 +24,10 @@ To use this repository feel free to check the documentation [here](https://lecti
 * [ ] Make a better README
 * [ ] Start doing the hard part (basically everything)
 
+## Known bugs
+
+* Not made to work with teacher accounts (as i have no way of testing anything)
+
 ## Contributing
 
 If you want to contribute, you can just fork this repository and start a pull request.
