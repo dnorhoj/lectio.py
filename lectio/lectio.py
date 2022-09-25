@@ -28,10 +28,8 @@ class Lectio:
     def __init__(self, inst_id: int) -> None:
         self.__CREDS = []
         self.__session = requests.Session()
-        
-        self.inst_id = inst_id
-        self._BASE_URL = f"https://www.lectio.dk/lectio/{str(inst_id)}"
 
+        self.inst_id = inst_id
 
     def authenticate(self, username: str, password: str, save_creds: bool = True) -> bool:
         """Authenticates you on Lectio.
@@ -53,14 +51,14 @@ class Lectio:
 
         Example::
 
-            from lectio import Lectio, errors
+            from lectio import Lectio, exceptions
 
             lect = Lectio(123)
 
             try:
                 lect.authenticate("username", "password"):
                 print("Authenticated")
-            except errors.IncorrectCredentialsError:
+            except exceptions.IncorrectCredentialsError:
                 print("Not authenticated")
         """
 
@@ -71,45 +69,43 @@ class Lectio:
         # Call the actual authentication method
         self._authenticate(username, password)
 
-        # Check if authentication passed
-        self._request(self._BASE_URL + "/forside.aspx")
-
-    def _authenticate(self, username: str = None, password: str = None) -> bool:
+    def _authenticate(self, username: str = None, password: str = None):
         if username is None or password is None:
             if len(self.__CREDS) != 2:
                 raise exceptions.UnauthenticatedError(
-                    "Auto auth failed, did you authenticate?")
+                    "No authentication details provided and no saved credentials found!")
 
             username, password = self.__CREDS
 
         self.log_out()  # Clear session
 
-        login_page = self.__session.get(self._BASE_URL + "/login.aspx")
+        URL = f"https://www.lectio.dk/lectio/{self.inst_id}/login.aspx"
+
+        login_page = self.__session.get(URL)
 
         if 'fejlhandled.aspx?title=Skolen+eksisterer+ikke' in login_page.url:
             raise exceptions.InstitutionDoesNotExistError(
                 f"The institution with the id '{self._INST_ID}' does not exist!")
 
-        if login_page.status_code != 200:
-            return False
-
         parser = BeautifulSoup(login_page.text, "html.parser")
 
-        self.__session.post(
-            self._BASE_URL + "/login.aspx",
-            data={
-                "time": 0,
-                "__EVENTTARGET": "m$Content$submitbtn2",
-                "__EVENTARGUMENT": "",
-                "__SCROLLPOSITION": "",
-                "__VIEWSTATEX": parser.find(attrs={"name": "__VIEWSTATEX"})["value"],
-                "__VIEWSTATEY_KEY": "",
-                "__VIEWSTATE": "",
-                "__EVENTVALIDATION": parser.find(attrs={"name": "__EVENTVALIDATION"})["value"],
-                "m$Content$username": username,
-                "m$Content$password": password
-            }
-        )
+        r = self.__session.post(URL, data={
+            "time": 0,
+            "__EVENTTARGET": "m$Content$submitbtn2",
+            "__EVENTARGUMENT": "",
+            "__SCROLLPOSITION": "",
+            "__VIEWSTATEX": parser.find(attrs={"name": "__VIEWSTATEX"})["value"],
+            "__VIEWSTATEY_KEY": "",
+            "__VIEWSTATE": "",
+            "__EVENTVALIDATION": parser.find(attrs={"name": "__EVENTVALIDATION"})["value"],
+            "m$Content$username": username,
+            "m$Content$password": password
+        })
+
+        if r.url == URL:
+            # Authentication failed
+            raise exceptions.IncorrectCredentialsError(
+                "Incorrect credentials provided!")
 
     def me(self) -> Student:
         """Gets own student object
@@ -118,7 +114,7 @@ class Lectio:
             :class:`lectio.profile.User`: User object
         """
 
-        r = self._request(self._BASE_URL + "/forside.aspx")
+        r = self._request("forside.aspx")
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -149,7 +145,7 @@ class Lectio:
 
             # Check if user exists
             r = self._request(
-                f"{self._BASE_URL}/SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
+                f"SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
 
             soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -163,11 +159,14 @@ class Lectio:
             return Student(self, user_id)
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
-        r = self.__session.request(method, url, **kwargs)
+        r = self.__session.request(
+            method, f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}", **kwargs)
 
         if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
-            self._authenticate()
-            r = self.__session.get(url)
+            if not self._authenticate():
+                raise exceptions.UnauthenticatedError("Unauthenticated")
+            r = self.__session.get(
+                f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}")
             if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
                 raise exceptions.IncorrectCredentialsError(
                     "Could not restore session, probably incorrect credentials")

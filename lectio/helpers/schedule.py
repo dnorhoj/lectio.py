@@ -91,8 +91,7 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
         *params
     ])
 
-    schedule_request = lectio._request(
-        f"{lectio._BASE_URL}/SkemaAvanceret.aspx?{params}")
+    schedule_request = lectio._request(f"SkemaAvanceret.aspx?{params}")
 
     soup = BeautifulSoup(schedule_request.text, 'html.parser')
 
