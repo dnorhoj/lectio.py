@@ -35,6 +35,9 @@ class Module:
         self.end_time = kwargs.get("end_time")
         self.status = kwargs.get("status")
         self.url = kwargs.get("url")
+    
+    def __repr__(self) -> str:
+        return f"Module({self.subject}, {self.start_time}, {self.end_time})"
 
     def display(self):
         print(f"Title:      {self.title}")
