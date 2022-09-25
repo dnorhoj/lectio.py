@@ -1,12 +1,10 @@
-from datetime import datetime, timedelta
 import re
-from typing import Union
 import requests
 from bs4 import BeautifulSoup
 
 from . import exceptions
 
-from .user import Student, Teacher, Types as UserType
+from .user import User, UserType
 
 
 class Lectio:
@@ -107,8 +105,8 @@ class Lectio:
             raise exceptions.IncorrectCredentialsError(
                 "Incorrect credentials provided!")
 
-    def me(self) -> Student:
-        """Gets own student object
+    def me(self) -> User:
+        """Gets own user object
 
         Returns:
             :class:`lectio.profile.User`: User object
@@ -125,7 +123,7 @@ class Lectio:
 
         return self.get_user(user_id, check=False)
 
-    def get_user(self, user_id: str, user_type: int = UserType.STUDENT, check: bool = True) -> Union[Student, Teacher]:
+    def get_user(self, user_id: str, user_type: int = UserType.STUDENT, check: bool = True) -> User:
         """Gets a user by their id
 
         Args:
@@ -153,10 +151,7 @@ class Lectio:
                 raise exceptions.UserDoesNotExistError(
                     f"The user with the id '{user_id}' does not exist!")
 
-        if user_type == UserType.TEACHER:
-            return Teacher(self, user_id)
-        else:
-            return Student(self, user_id)
+        return User(self, user_id, user_type)
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
         r = self.__session.request(
