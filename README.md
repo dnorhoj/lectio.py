@@ -1,7 +1,9 @@
 # lectio.py
 
-![](https://img.shields.io/github/license/dnorhoj/lectio.py)
-
+[![License](https://img.shields.io/github/license/dnorhoj/lectio.py)](LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/lectiopy/badge/?version=latest)](https://lectiopy.readthedocs.io/en/latest/?badge=latest)
+[![PyPi version](https://img.shields.io/pypi/v/lectio.py.svg)](https://pypi.org/project/lectio.py/)
+[![PyPi supported python versions](https://img.shields.io/pypi/pyversions/lectio.py.svg)](https://python.org/)
 
 *Please note: This library is nowhere close to done.*
 

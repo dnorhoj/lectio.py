@@ -70,7 +70,6 @@ class Lectio:
         self.__CREDS = []
 
         self.__session = requests.Session()
-        # TODO: Check if inst_id is valid
 
     def authenticate(self, username: str, password: str, save_creds: bool = True) -> bool:
         """Authenticates you on Lectio.
@@ -87,7 +86,8 @@ class Lectio:
             save_creds (bool): Whether the credentials should be saved in the object (useful for auto relogin on logout)
 
         Raises:
-            lectio.IncorrectCredentialsError: When incorrect credentials passed
+            :class:`exceptions.IncorrectCredentialsError`: When incorrect credentials passed
+            :class:`exceptions.InstitutionDoesNotExistError`: When the institution id passed on creation of object is invalid
 
         Example::
 
@@ -123,6 +123,10 @@ class Lectio:
         self.log_out()  # Clear session
 
         login_page = self.__session.get(self.__BASE_URL + "/login.aspx")
+
+        if 'fejlhandled.aspx?title=Skolen+eksisterer+ikke' in login_page.url:
+            raise exceptions.InstitutionDoesNotExistError(f"The institution with the id '{self._INST_ID}' does not exist!")
+
 
         if login_page.status_code != 200:
             return False
