@@ -16,7 +16,11 @@ You can read the documentation
 
 ## How do i use this?
 
-To use this repository feel free to check the documentation [here](https://lectiopy.rtfd.io/).
+You can install this library via `pip`:
+
+    pip install lectio.py
+
+For a quickstart guide as well as some examples, you can read the documentation [here](https://lectiopy.rtfd.io/).
 
 ## Progress
 
@@ -38,6 +42,7 @@ To use this repository feel free to check the documentation [here](https://lecti
 ## Todo
 
 * [ ] Make a better README
+* [ ] Quickstart, Examples, etc.
 
 ## Known bugs
 
