@@ -125,11 +125,6 @@ class User:
         elif self.type == UserType.TEACHER:
             self.__initials, self.__name, *_ = title.split(" - ")
 
-        src = soup.find(
-            "img", {"id": "s_m_HeaderContent_picctrlthumbimage"}).get("src")
-
-        self.__image = f"https://www.lectio.dk{src}&fullsize=1"
-
     def get_schedule(self, start_date: 'datetime', end_date: 'datetime', strip_time: bool = True) -> List['Module']:
         """Get schedule for user
 
@@ -165,7 +160,7 @@ class User:
         """str: User image url"""
 
         if not self.__image:
-            self.__populate()
+            self.__image = f"https://www.lectio.dk/lectio/{self._lectio.inst_id}/GetImage.aspx?pictureid={self.id}&fullsize=1"
 
         return self.__image
 
