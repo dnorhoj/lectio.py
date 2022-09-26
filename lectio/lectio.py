@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from . import exceptions
 
 from .user import User, UserType
+from .school import School
 
 
 class Lectio:
@@ -54,7 +55,7 @@ class Lectio:
             lect = Lectio(123)
 
             try:
-                lect.authenticate("username", "password"):
+                lect.authenticate("username", "password")
                 print("Authenticated")
             except exceptions.IncorrectCredentialsError:
                 print("Not authenticated")
@@ -104,6 +105,12 @@ class Lectio:
             # Authentication failed
             raise exceptions.IncorrectCredentialsError(
                 "Incorrect credentials provided!")
+
+    @property
+    def school(self) -> School:
+        """:class:`lectio.school.School`: The school object for the authenticated user."""
+
+        return School(self)
 
     def me(self) -> User:
         """Gets own user object

@@ -168,10 +168,3 @@ def parse_additionalinfo(info: str) -> Module:
         module.extra_info = "\n".join(info_list)
 
     return module
-
-
-def get_sched_for_student(lectio: 'Lectio', student_id: int, start_date: datetime, end_date: datetime, strip_time: bool = True) -> List[Module]:
-    return get_schedule(lectio, [f"studentsel={student_id}"], start_date, end_date, strip_time)
-
-def get_sched_for_teacher(lectio: 'Lectio', teacher_id: int, start_date: datetime, end_date: datetime, strip_time: bool = True) -> List[Module]:
-    return get_schedule(lectio, [f"teachersel={teacher_id}"], start_date, end_date, strip_time)
