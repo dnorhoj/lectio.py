@@ -1,9 +1,9 @@
 {
     "python.pythonPath": "C:\\Users\\dnorh\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
-    "restructuredtext.confPath": "${workspaceFolder}\\docs",
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
         "--ignore=E501"
-    ]
+    ],
+    "esbonio.sphinx.confDir": "${workspaceFolder}\\docs"
 }
