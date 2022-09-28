@@ -1,10 +1,10 @@
 # flake8: noqa
 from .lectio import Lectio
-from .user import User, UserType
-from .school import School
+from .models.user import User, UserType
+from .models.school import School
 from .helpers.schedule import Module
 from .exceptions import *
-from . import user
+from .models import user
 from . import lectio
 from . import exceptions
-from . import school
+from .models import school

@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 
 from . import exceptions
 
-from .user import Me, User, UserType
-from .school import School
+from .models.user import Me, User, UserType
+from .models.school import School
 
 
 class Lectio:
@@ -135,36 +135,6 @@ class Lectio:
         user_id = re.match(r'.*id=([0-9]+)$', content)[1]
 
         return self.get_user(user_id, check=False)
-
-    def get_user(self, user_id: str, user_type: int = UserType.STUDENT, check: bool = True) -> User:
-        """Gets a user by their id
-
-        Args:
-            user_id (str): The id of the user
-            user_type (int): The type of the user (student or teacher)
-            check (bool): Whether to check if the user exists (slower)
-
-        Returns:
-            :class:`lectio.profile.User`: User object
-
-        Raises:
-            :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
-        """
-
-        if check:
-            type_str = "elev" if user_type == UserType.STUDENT else "laerer"
-
-            # Check if user exists
-            r = self._request(
-                f"SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
-
-            soup = BeautifulSoup(r.text, 'html.parser')
-
-            if soup.title.string.strip().startswith("Fejl - Lectio"):
-                raise exceptions.UserDoesNotExistError(
-                    f"The user with the id '{user_id}' does not exist!")
-
-        return User(self, user_id, user_type)
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
         r = self.__session.request(

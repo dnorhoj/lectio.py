@@ -4,9 +4,10 @@ import re
 from urllib.parse import quote
 
 from .user import User, UserType
+from ..import exceptions
 
 if TYPE_CHECKING:
-    from .lectio import Lectio
+    from ..lectio import Lectio
 
 
 class School:
@@ -33,6 +34,36 @@ class School:
 
         self.name = soup.find(
             "div", {"id": "s_m_masterleftDiv"}).text.strip().split("\n")[0].replace("\r", "")
+
+    def get_user_by_id(self, user_id: str, user_type: int = UserType.STUDENT, check: bool = True) -> User:
+        """Gets a user by their id
+
+        Args:
+            user_id (str): The id of the user
+            user_type (int): The type of the user (student or teacher)
+            check (bool): Whether to check if the user exists (slower)
+
+        Returns:
+            :class:`lectio.user.User`: User object
+
+        Raises:
+            :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
+        """
+
+        if check:
+            type_str = "elev" if user_type == UserType.STUDENT else "laerer"
+
+            # Check if user exists
+            r = self._request(
+                f"SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
+
+            soup = BeautifulSoup(r.text, 'html.parser')
+
+            if soup.title.string.strip().startswith("Fejl - Lectio"):
+                raise exceptions.UserDoesNotExistError(
+                    f"The {UserType.get_str(user_type, True)} with the id '{user_id}' does not exist!")
+
+        return User(self, user_id, user_type)
 
     def get_teachers(self) -> List[User]:
         """Get all teachers
@@ -171,7 +202,7 @@ class School:
         """Get all students
 
         Returns:
-            list(:class:`lectio.User`): List of students
+            list(:class:`User`): List of students
         """
 
         res = []
@@ -182,6 +213,15 @@ class School:
         return res
 
     def search_for_users(self, query: str) -> List[User]:
+        """Search for user
+
+        Args:
+            query (str): Name to search for
+
+        Returns:
+            list(:class:`lectio.user.User`): List of users
+        """
+
         return [*self.search_for_students(query), *self.search_for_teachers(query)]
 
     def __repr__(self) -> str:

@@ -1,12 +1,12 @@
 from bs4 import BeautifulSoup
 from typing import TYPE_CHECKING, List
 
-from .helpers.schedule import get_schedule
+from ..helpers.schedule import get_schedule
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from .helpers.schedule import Module
-    from .lectio import Lectio
+    from ..helpers.schedule import Module
+    from ..lectio import Lectio
 
 
 class UserType:
@@ -62,7 +62,8 @@ class User:
 
     Note:
         This class should not be instantiated directly,
-        but rather through the :meth:`lectio.Lectio.me` or :meth:`lectio.Lectio.get_user` methods.
+        but rather through the :meth:`lectio.Lectio.get_user`
+        or :meth:`lectio.school.School.search_for_users` methods or similar.
 
     Args:
         lectio (:class:`lectio.Lectio`): Lectio object
