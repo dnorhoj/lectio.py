@@ -54,7 +54,7 @@ class School:
             type_str = "elev" if user_type == UserType.STUDENT else "laerer"
 
             # Check if user exists
-            r = self._request(
+            r = self._lectio._request(
                 f"SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
 
             soup = BeautifulSoup(r.text, 'html.parser')
