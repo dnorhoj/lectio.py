@@ -119,6 +119,11 @@ class User:
     def get_schedule(self, start_date: 'datetime', end_date: 'datetime', strip_time: bool = True) -> List['Module']:
         """Get schedule for user
 
+        Note:
+            As lectio is weird, you can only get a schedule for a range
+            that is less than one month.
+            If you specify a range greater than one month, you will get an empty return list.
+
         Args:
             start_date (:class:`datetime.datetime`): Start date
             end_date (:class:`datetime.datetime`): End date
