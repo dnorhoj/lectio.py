@@ -14,7 +14,7 @@ Lectio
 School
 ------
 
-.. autoclass:: lectio.school.School
+.. autoclass:: lectio.models.school.School
     :members:
     :undoc-members:
 

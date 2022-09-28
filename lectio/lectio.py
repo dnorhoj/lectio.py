@@ -113,10 +113,10 @@ class Lectio:
                 "Incorrect credentials provided!")
 
     def school(self) -> School:
-        """Returns a :class:`School` object for the given institution id.
+        """Returns a :class:`lectio.models.school.School` object for the given institution id.
 
         Returns:
-            :class:`lectio.school.School`: The school object for the authenticated user.
+            :class:`lectio.models.school.School`: The school object for the authenticated user.
         """
 
         if self.__school is None:

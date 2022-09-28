@@ -55,7 +55,7 @@ class User:
     Note:
         This class should not be instantiated directly,
         but rather through the :meth:`lectio.Lectio.get_user`
-        or :meth:`lectio.school.School.search_for_users` methods or similar.
+        or :meth:`lectio.models.school.School.search_for_users` methods or similar.
 
     Args:
         lectio (:class:`lectio.Lectio`): Lectio object
