@@ -101,6 +101,10 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
     if not module_table:
         return []
 
+    # Not a good way of checking if there are no modules, but it works
+    if module_table.find("div", {"class": "noRecord"}):
+        return []
+
     modules = module_table.findChildren('tr', class_=None)
 
     schedule = []
