@@ -7,7 +7,7 @@ from .user import User, UserType
 from ..import exceptions
 
 if TYPE_CHECKING:
-    from ..lectio import Lectio
+    from .. import Lectio
 
 
 class School:
@@ -44,7 +44,7 @@ class School:
             check (bool): Whether to check if the user exists (slower)
 
         Returns:
-            :class:`lectio.user.User`: User object
+            :class:`lectio.models.user.User`: User object
 
         Raises:
             :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
@@ -69,7 +69,7 @@ class School:
         """Get all teachers
 
         Returns:
-            list(:class:`lectio.User`): List of teachers
+            list(:class:`lectio.models.user.User`): List of teachers
         """
 
         r = self._lectio._request("FindSkema.aspx?type=laerer&sortering=id")
@@ -118,7 +118,7 @@ class School:
             query (str): Name to search for
 
         Returns:
-            list(:class:`lectio.User`): List of teachers
+            list(:class:`lectio.models.user.User`): List of teachers
         """
 
         res = []
@@ -136,7 +136,7 @@ class School:
             letter (str): Letter to search for
 
         Returns:
-            list(:class:`lectio.User`): List of students
+            list(:class:`lectio.models.user.User`): List of students
         """
 
         r = self._lectio._request(
@@ -219,7 +219,7 @@ class School:
             query (str): Name to search for
 
         Returns:
-            list(:class:`lectio.user.User`): List of users
+            list(:class:`lectio.models.user.User`): List of users
         """
 
         return [*self.search_for_students(query), *self.search_for_teachers(query)]

@@ -122,7 +122,7 @@ class Lectio:
         """Gets the authenticated user
 
         Returns:
-            :class:`lectio.user.Me`: Own user object
+            :class:`lectio.models.user.Me`: Own user object
         """
 
         r = self._request("forside.aspx")
@@ -134,7 +134,7 @@ class Lectio:
 
         user_id = re.match(r'.*id=([0-9]+)$', content)[1]
 
-        return self.get_user(user_id, check=False)
+        return Me(self, user_id, UserType.STUDENT)  # TODO; Add support for teachers
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
         r = self.__session.request(

@@ -18,7 +18,7 @@ class UserType:
 
     Example:
         >>> from lectio import Lectio
-        >>> from lectio.user import UserType
+        >>> from lectio.models.user import UserType
         >>> lec = Lectio(123)
         >>> lec.authenticate("username", "password")
         >>> me = lec.me()
