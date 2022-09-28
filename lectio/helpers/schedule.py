@@ -95,8 +95,13 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
 
     soup = BeautifulSoup(schedule_request.text, 'html.parser')
 
-    modules = soup.find(
-        "table", class_="list texttop lf-grid").findChildren('tr', class_=None)
+    module_table = soup.find(
+        "table", class_="list texttop lf-grid")
+
+    if not module_table:
+        return []
+
+    modules = module_table.findChildren('tr', class_=None)
 
     schedule = []
     for module in modules:

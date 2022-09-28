@@ -122,7 +122,8 @@ class User:
         Args:
             start_date (:class:`datetime.datetime`): Start date
             end_date (:class:`datetime.datetime`): End date
-            strip_time (bool): Strip time from datetime objects (default: True)
+            strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
+                Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
         """
 
         return get_schedule(
