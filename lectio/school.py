@@ -167,7 +167,7 @@ class School:
 
         return res
 
-    def get_all_students(self, user_type: int = UserType.STUDENT) -> List[User]:
+    def get_all_students(self) -> List[User]:
         """Get all students
 
         Returns:
@@ -177,7 +177,7 @@ class School:
         res = []
 
         for letter in "abcdefghijklmnopqrstuvwxyzæøå":
-            res.extend(self.get_user_by_letter(letter))
+            res.extend(self.get_students_by_letter(letter))
 
         return res
 
