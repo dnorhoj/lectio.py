@@ -24,6 +24,9 @@ class Lectio:
             Here, the ``123`` would be my institution id.
     """
 
+    __school: School = None
+    __me: Me = None
+
     def __init__(self, inst_id: int) -> None:
         self.__CREDS = []
         self.__session = requests.Session()
@@ -116,7 +119,10 @@ class Lectio:
             :class:`lectio.school.School`: The school object for the authenticated user.
         """
 
-        return School(self)
+        if self.__school is None:
+            self.__school = School(self)
+
+        return self.__school
 
     def me(self) -> Me:
         """Gets the authenticated user
@@ -125,16 +131,20 @@ class Lectio:
             :class:`lectio.models.user.Me`: Own user object
         """
 
-        r = self._request("forside.aspx")
+        if self.__me is None:
+            r = self._request("forside.aspx")
 
-        soup = BeautifulSoup(r.text, 'html.parser')
+            soup = BeautifulSoup(r.text, 'html.parser')
 
-        content = soup.find(
-            'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
+            content = soup.find(
+                'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
 
-        user_id = re.match(r'.*id=([0-9]+)$', content)[1]
+            user_id = re.match(r'.*id=([0-9]+)$', content)[1]
 
-        return Me(self, user_id, UserType.STUDENT)  # TODO; Add support for teachers
+            # TODO; Add support for teachers
+            self.__me = Me(self, user_id, UserType.STUDENT)
+
+        return self.__me
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
         r = self.__session.request(
