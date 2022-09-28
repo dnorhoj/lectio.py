@@ -11,11 +11,7 @@ if TYPE_CHECKING:
 
 
 class UserType(Enum):
-    """User types
-
-    Attributes:
-        STUDENT (int): Student
-        TEACHER (int): Teacher
+    """User types enum
 
     Example:
         >>> from lectio import Lectio
@@ -64,16 +60,12 @@ class User:
     Args:
         lectio (:class:`lectio.Lectio`): Lectio object
         user_id (int): User id
-        user_type (int): User type (UserType.STUDENT or UserType.TEACHER)
+        user_type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
         lazy (bool): Whether to not populate user object on instantiation (default: False)
 
     Attributes:
         id (int): User id
-        type (int): User type (UserType.STUDENT or UserType.TEACHER)
-        name (str): Full name of user
-        initials (str|None): Initials of user if user is a teacher
-        class_name (str|None): Class of user if user is a student
-        image (str): User image url
+        type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
     """
 
     __name = None
@@ -142,12 +134,11 @@ class User:
         )
 
     def __repr__(self) -> str:
-        type_str = "Student" if self.type == UserType.STUDENT else "Teacher"
-        return f"User({type_str}, {self.id})"
+        return f"User({self.type.get_str().capitalize()}, {self.id})"
 
     @property
     def name(self) -> str:
-        """str: User name"""
+        """str: User's name"""
 
         if not self.__name:
             self.__populate()
@@ -156,7 +147,7 @@ class User:
 
     @property
     def image(self) -> str:
-        """str: User image url"""
+        """str: User's image url"""
 
         if not self.__image:
             self.__populate()
@@ -165,7 +156,7 @@ class User:
 
     @property
     def initials(self) -> str:
-        """str: User initials (only for teachers)"""
+        """str|None: User's initials (only for teachers)"""
 
         if self.type == UserType.STUDENT:
             return None
@@ -177,7 +168,7 @@ class User:
 
     @property
     def class_name(self) -> str:
-        """str: User class name (only for students)"""
+        """str|None: User's class name (only for students)"""
 
         if self.type == UserType.TEACHER:
             return None
@@ -195,4 +186,5 @@ class User:
 
 
 class Me(User):
+    # TODO: Add methods for getting grades, absences, etc.
     pass

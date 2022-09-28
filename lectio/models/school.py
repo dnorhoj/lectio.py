@@ -40,7 +40,7 @@ class School:
 
         Args:
             user_id (str): The id of the user
-            user_type (int): The type of the user (student or teacher)
+            user_type (:class:`lectio.models.user.UserType`): The type of the user (student or teacher)
             check (bool): Whether to check if the user exists (slower)
 
         Returns:

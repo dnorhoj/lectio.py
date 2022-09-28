@@ -4,5 +4,5 @@
     "python.linting.flake8Args": [
         "--ignore=E501"
     ],
-    "esbonio.sphinx.confDir": "${workspaceFolder}\\docs"
+    "esbonio.sphinx.confDir": "${workspaceFolder}/docs"
 }
