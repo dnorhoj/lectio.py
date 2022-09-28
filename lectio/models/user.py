@@ -1,3 +1,4 @@
+from enum import Enum
 from bs4 import BeautifulSoup
 from typing import TYPE_CHECKING, List
 
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
     from ..lectio import Lectio
 
 
-class UserType:
+class UserType(Enum):
     """User types
 
     Attributes:
@@ -31,28 +32,23 @@ class UserType:
     STUDENT = 0
     TEACHER = 1
 
-    @staticmethod
-    def get_str(user_type: int, en: bool = False) -> str:
-        """Get string representation of user type for lectio interface
-
-        Args:
-            type (int): User type
-            en (bool): Whether to return english string instead of Danish
+    def get_str(self) -> str:
+        """Get string representation of user type for lectio interface in english
 
         Returns:
             str: String representation of user type
         """
 
-        if user_type == UserType.STUDENT:
-            if en:
-                return "student"
-            else:
-                return "elev"
-        elif user_type == UserType.TEACHER:
-            if en:
-                return "teacher"
-            else:
-                return "laerer"
+        if self.value == self.STUDENT.value:
+            return "student"
+        elif self.value == self.TEACHER.value:
+            return "teacher"
+
+    def __str__(self) -> str:
+        if self.value == self.STUDENT.value:
+            return "elev"
+        elif self.value == self.TEACHER.value:
+            return "laerer"
 
 
 class User:
@@ -85,12 +81,9 @@ class User:
     __class_name = None
     __image = None
 
-    def __init__(self, lectio: 'Lectio', user_id: int, user_type: int = UserType.STUDENT, *, lazy=False, **user_data) -> None:
+    def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, *, lazy=False, **user_data) -> None:
         self._lectio = lectio
         self.id = user_id
-
-        if user_type not in [UserType.STUDENT, UserType.TEACHER]:
-            raise ValueError("Invalid user type")
 
         self.type = user_type
 
@@ -112,7 +105,7 @@ class User:
 
         # Get user's schedule for today
         r = self._lectio._request(
-            f"SkemaNy.aspx?type={UserType.get_str(self.type)}&{UserType.get_str(self.type)}id={self.id}")
+            f"SkemaNy.aspx?type={self.type}&{self.type}id={self.id}")
 
         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -142,7 +135,7 @@ class User:
 
         return get_schedule(
             self._lectio,
-            [f"{UserType.get_str(self.type, True)}sel={self.id}"],
+            [f"{self.type.get_str()}sel={self.id}"],
             start_date,
             end_date,
             strip_time

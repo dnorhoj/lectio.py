@@ -35,7 +35,7 @@ class School:
         self.name = soup.find(
             "div", {"id": "s_m_masterleftDiv"}).text.strip().split("\n")[0].replace("\r", "")
 
-    def get_user_by_id(self, user_id: str, user_type: int = UserType.STUDENT, check: bool = True) -> User:
+    def get_user_by_id(self, user_id: str, user_type: UserType = UserType.STUDENT, check: bool = True) -> User:
         """Gets a user by their id
 
         Args:
@@ -51,11 +51,9 @@ class School:
         """
 
         if check:
-            type_str = "elev" if user_type == UserType.STUDENT else "laerer"
-
             # Check if user exists
             r = self._lectio._request(
-                f"SkemaNy.aspx?type={type_str}&{type_str}id={user_id}")
+                f"SkemaNy.aspx?type={user_type}&{user_type}id={user_id}")
 
             soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -63,7 +61,7 @@ class School:
                 raise exceptions.UserDoesNotExistError(
                     f"The {UserType.get_str(user_type, True)} with the id '{user_id}' does not exist!")
 
-        return User(self, user_id, user_type)
+        return User(self._lectio, user_id, user_type)
 
     def get_teachers(self) -> List[User]:
         """Get all teachers
