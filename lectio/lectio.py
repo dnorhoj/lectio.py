@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from . import exceptions
 
-from .user import User, UserType
+from .user import Me, User, UserType
 from .school import School
 
 
@@ -21,7 +21,7 @@ class Lectio:
 
                 https://www.lectio.dk/lectio/123/login.aspx
 
-            Here, the `123` would be my institution id.
+            Here, the ``123`` would be my institution id.
     """
 
     def __init__(self, inst_id: int) -> None:
@@ -59,6 +59,9 @@ class Lectio:
                 print("Authenticated")
             except exceptions.IncorrectCredentialsError:
                 print("Not authenticated")
+                exit(1)
+
+            ...
         """
 
         self.__CREDS = []
@@ -106,17 +109,20 @@ class Lectio:
             raise exceptions.IncorrectCredentialsError(
                 "Incorrect credentials provided!")
 
-    @property
     def school(self) -> School:
-        """:class:`lectio.school.School`: The school object for the authenticated user."""
+        """Returns a :class:`School` object for the given institution id.
+
+        Returns:
+            :class:`lectio.school.School`: The school object for the authenticated user.
+        """
 
         return School(self)
 
-    def me(self) -> User:
-        """Gets own user object
+    def me(self) -> Me:
+        """Gets the authenticated user
 
         Returns:
-            :class:`lectio.profile.User`: User object
+            :class:`lectio.user.Me`: Own user object
         """
 
         r = self._request("forside.aspx")
@@ -136,7 +142,7 @@ class Lectio:
         Args:
             user_id (str): The id of the user
             user_type (int): The type of the user (student or teacher)
-            check (bool): Whether to check if the user exists
+            check (bool): Whether to check if the user exists (slower)
 
         Returns:
             :class:`lectio.profile.User`: User object

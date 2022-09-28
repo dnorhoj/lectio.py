@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List
 from bs4 import BeautifulSoup
 import re
+from urllib.parse import quote
 
 from .user import User, UserType
 
@@ -33,7 +34,71 @@ class School:
         self.name = soup.find(
             "div", {"id": "s_m_masterleftDiv"}).text.strip().split("\n")[0].replace("\r", "")
 
-    def get_user_by_letter(self, letter: str, user_type: int = UserType.STUDENT) -> List[User]:
+    def get_teachers(self) -> List[User]:
+        """Get all teachers
+
+        Returns:
+            list(:class:`lectio.User`): List of teachers
+        """
+
+        r = self._lectio._request("FindSkema.aspx?type=laerer&sortering=id")
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        teachers = []
+
+        # Container containing all teachers
+        lst = soup.find("ul", {"class": "ls-columnlist mod-onechild"})
+
+        if lst is None:
+            return []
+
+        # Iterate and create user objects
+        for i in lst.find_all("li"):
+            user_id = int(i.a["href"].split("=")[-1])
+
+            user_name = i.a.contents[1].strip()
+
+            initial_span = i.a.find('span')
+
+            user_initials = None
+            if initial_span is not None:
+                user_initials = initial_span.text.strip()
+
+            teachers.append(User(self._lectio,
+                                 user_id,
+                                 UserType.TEACHER,
+                                 lazy=True,
+                                 name=user_name,
+                                 initials=user_initials))
+
+        return teachers
+
+    def search_for_teachers(self, query: str) -> List[User]:
+        """Search for teachers
+
+        Note:
+            This method is not very reliable, and will sometimes return no results.
+            Also, the query has to be from the beginning of the name.
+
+            Example: Searching for "John" will return "John Doe", but searching for "Doe" will not.
+
+        Args:
+            query (str): Name to search for
+
+        Returns:
+            list(:class:`lectio.User`): List of teachers
+        """
+
+        res = []
+
+        for teacher in self.get_teachers():
+            if teacher.name.lower().startswith(query.lower()):
+                res.append(teacher)
+
+        return res
+
+    def get_students_by_letter(self, letter: str) -> List[User]:
         """Get students by first letter of name
 
         Args:
@@ -41,17 +106,10 @@ class School:
 
         Returns:
             list(:class:`lectio.User`): List of students
-
-        Raises:
-            NotImplementedError: If user_type is UserType.TEACHER, as this is not implemented
         """
 
-        if user_type == UserType.TEACHER:
-            raise NotImplementedError(
-                "Getting teachers by letter is not implemented")  # TODO
-
         r = self._lectio._request(
-            "FindSkema.aspx?type=elev&forbogstav=" + letter.upper())
+            "FindSkema.aspx?type=elev&forbogstav=" + quote(letter.upper()))
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -60,7 +118,7 @@ class School:
         # Container containing all students
         lst = soup.find("ul", {"class": "ls-columnlist mod-onechild"})
 
-        # Shouldn't happen in cases other than `len(letter) > 1` or if letter is not a valid character
+        # Shouldn't happen in cases other than ``len(letter) > 1`` or if letter is not a valid character
         if lst is None:
             return []
 
@@ -85,7 +143,7 @@ class School:
 
         return students
 
-    def search_for_user(self, query: str, user_type: int = UserType.STUDENT) -> List[User]:
+    def search_for_students(self, query: str) -> List[User]:
         """Search for user
 
         Note:
@@ -102,27 +160,29 @@ class School:
         """
 
         res = []
-        for student in self.get_user_by_letter(query[0], user_type):
+
+        for student in self.get_students_by_letter(query[0]):
             if student.name.lower().startswith(query.lower()):
                 res.append(student)
 
         return res
 
-    def get_all_users(self, user_type: int = UserType.STUDENT) -> List[User]:
-        """Get all users
-
-        Args:
-            user_type (int): The type of the user (student or teacher)
+    def get_all_students(self, user_type: int = UserType.STUDENT) -> List[User]:
+        """Get all students
 
         Returns:
-            list(:class:`lectio.User`): List of users
+            list(:class:`lectio.User`): List of students
         """
 
         res = []
+
         for letter in "abcdefghijklmnopqrstuvwxyzæøå":
             res.extend(self.get_user_by_letter(letter))
 
         return res
+
+    def search_for_users(self, query: str) -> List[User]:
+        return [*self.search_for_students(query), *self.search_for_teachers(query)]
 
     def __repr__(self) -> str:
         return f"School({self.name})"
