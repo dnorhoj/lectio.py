@@ -21,7 +21,7 @@ Create a new file, and add the following code:
     # Get the schedule for today
     schedule = me.get_schedule(datetime.now(), datetime.now() + timedelta(days=1))
 
-We now have a list of all :class:`lectio.helpers.Module` in the ``schedule`` variable. Let's print it:
+We now have a list of all :class:`lectio.helpers.schedule.Module` in the ``schedule`` variable. Let's print it:
 
 .. code-block:: python
 

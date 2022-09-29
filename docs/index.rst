@@ -18,6 +18,7 @@ Information
 -----------
 
 **Useful links:** :doc:`/installation` | :doc:`/quickstart`
+
 **Reference:** :doc:`/reference` | :doc:`/exceptions`
 
 Table of contents
