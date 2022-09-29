@@ -59,7 +59,7 @@ class School:
 
             if soup.title.string.strip().startswith("Fejl - Lectio"):
                 raise exceptions.UserDoesNotExistError(
-                    f"The {UserType.get_str(user_type, True)} with the id '{user_id}' does not exist!")
+                    f"The {user_type.get_str()} with the id '{user_id}' does not exist!")
 
         return User(self._lectio, user_id, user_type)
 
@@ -103,17 +103,12 @@ class School:
 
         return teachers
 
-    def search_for_teachers(self, query: str) -> List[User]:
-        """Search for teachers
-
-        Note:
-            This method is not very reliable, and will sometimes return no results.
-            Also, the query has to be from the beginning of the name.
-
-            Example: Searching for "John" will return "John Doe", but searching for "Doe" will not.
+    def search_for_teachers(self, query_name: str, query_initials: str = None) -> List[User]:
+        """Search for teachers by name or initials
 
         Args:
-            query (str): Name to search for
+            query_name (str): Name to search for
+            query_initials (Optional[str]): Initials to search for
 
         Returns:
             list(:class:`lectio.models.user.User`): List of teachers
@@ -122,7 +117,9 @@ class School:
         res = []
 
         for teacher in self.get_teachers():
-            if teacher.name.lower().startswith(query.lower()):
+            if query_initials and query_initials.lower() in teacher.initials.lower():
+                res.append(teacher)
+            elif query_name.lower() in teacher.name.lower():
                 res.append(teacher)
 
         return res
@@ -179,7 +176,7 @@ class School:
             This method is not very reliable, and will sometimes return no results.
             Also, the query has to be from the beginning of the name.
 
-            Example: Searching for "John" will return "John Doe", but searching for "Doe" will not.
+            Example: Searching for "John" will return "John Doe", but searching for "Doe" might not.
 
         Args:
             query (str): Name to search for
@@ -191,7 +188,7 @@ class School:
         res = []
 
         for student in self.get_students_by_letter(query[0]):
-            if student.name.lower().startswith(query.lower()):
+            if query.lower() in student.name.lower():
                 res.append(student)
 
         return res
