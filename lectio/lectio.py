@@ -1,51 +1,11 @@
-from datetime import datetime, timedelta
 import re
 import requests
 from bs4 import BeautifulSoup
+
 from . import exceptions
 
-
-class Module:
-    """Lectio module object
-
-    Represents a lectio module
-
-    Args:
-        title (str|None): Optional description of module (not present in all modules)
-        subject (str|None): "Hold" from lectio, bascially which subject.
-            Example: `1.a Da`
-        teacher (str|None): Initials of teacher.
-            Example: `abcd`
-        room (str|None): Room name of module.
-            Example: `0.015`
-        extra_info (str|None): Extra info from module, includes homework and other info.
-        start_time (:class:`datetime.datetime`): Start time of module
-        end_time (:class:`datetime.datetime`): End time of module
-        status (int): 0=normal, 1=changed, 2=cancelled
-        url (str|None): Url for more info for the module
-    """
-
-    def __init__(self, **kwargs) -> None:
-        self.title = kwargs.get("title")
-        self.subject = kwargs.get("subject")
-        self.teacher = kwargs.get("teacher")
-        self.room = kwargs.get("room")
-        self.extra_info = kwargs.get("extra_info")
-        self.start_time = kwargs.get("start_time")
-        self.end_time = kwargs.get("end_time")
-        self.status = kwargs.get("status")
-        self.url = kwargs.get("url")
-
-    def display(self):
-        print(f"Title:      {self.title}")
-        print(f"Subject(s): {self.subject}")
-        print(f"Teacher(s): {self.teacher}")
-        print(f"Room(s):    {self.room}")
-        print(f"Starts at:  {self.start_time}")
-        print(f"Ends at:    {self.end_time}")
-        print(f"Status:     {self.status}")
-        print(f"URL:        {self.url}")
-        print(f"Extra info:\n\n{self.extra_info}")
+from .models.user import Me, User, UserType
+from .models.school import School
 
 
 class Lectio:
@@ -61,16 +21,17 @@ class Lectio:
 
                 https://www.lectio.dk/lectio/123/login.aspx
 
-            Here, the `123` would be my institution id.
+            Here, the ``123`` would be my institution id.
     """
 
-    def __init__(self, inst_id: int) -> None:
-        self.__INST_ID = inst_id
-        self.__BASE_URL = f"https://www.lectio.dk/lectio/{str(inst_id)}"
-        self.__CREDS = []
+    __school: School = None
+    __me: Me = None
 
+    def __init__(self, inst_id: int) -> None:
+        self.__CREDS = []
         self.__session = requests.Session()
-        # TODO: Check if inst_id is valid
+
+        self.inst_id = inst_id
 
     def authenticate(self, username: str, password: str, save_creds: bool = True) -> bool:
         """Authenticates you on Lectio.
@@ -87,19 +48,23 @@ class Lectio:
             save_creds (bool): Whether the credentials should be saved in the object (useful for auto relogin on logout)
 
         Raises:
-            lectio.IncorrectCredentialsError: When incorrect credentials passed
+            :class:`exceptions.IncorrectCredentialsError`: When incorrect credentials passed
+            :class:`exceptions.InstitutionDoesNotExistError`: When the institution id passed on creation of object is invalid
 
         Example::
 
-            from lectio import Lectio, errors
+            from lectio import Lectio, exceptions
 
             lect = Lectio(123)
 
             try:
-                lect.authenticate("username", "password"):
+                lect.authenticate("username", "password")
                 print("Authenticated")
-            except errors.IncorrectCredentialsError:
+            except exceptions.IncorrectCredentialsError:
                 print("Not authenticated")
+                exit(1)
+
+            ...
         """
 
         self.__CREDS = []
@@ -109,180 +74,88 @@ class Lectio:
         # Call the actual authentication method
         self._authenticate(username, password)
 
-        # Check if authentication passed
-        self._request(self.__BASE_URL + "/forside.aspx")
-
-    def _authenticate(self, username: str = None, password: str = None) -> bool:
+    def _authenticate(self, username: str = None, password: str = None):
         if username is None or password is None:
             if len(self.__CREDS) != 2:
                 raise exceptions.UnauthenticatedError(
-                    "Auto auth failed, did you authenticate?")
+                    "No authentication details provided and no saved credentials found!")
 
             username, password = self.__CREDS
 
         self.log_out()  # Clear session
 
-        login_page = self.__session.get(self.__BASE_URL + "/login.aspx")
+        URL = f"https://www.lectio.dk/lectio/{self.inst_id}/login.aspx"
 
-        if login_page.status_code != 200:
-            return False
+        login_page = self.__session.get(URL)
+
+        if 'fejlhandled.aspx?title=Skolen+eksisterer+ikke' in login_page.url:
+            raise exceptions.InstitutionDoesNotExistError(
+                f"The institution with the id '{self._INST_ID}' does not exist!")
 
         parser = BeautifulSoup(login_page.text, "html.parser")
 
-        self.__session.post(
-            self.__BASE_URL + "/login.aspx",
-            data={
-                "time": 0,
-                "__EVENTTARGET": "m$Content$submitbtn2",
-                "__EVENTARGUMENT": "",
-                "__SCROLLPOSITION": "",
-                "__VIEWSTATEX": parser.find(attrs={"name": "__VIEWSTATEX"})["value"],
-                "__VIEWSTATEY_KEY": "",
-                "__VIEWSTATE": "",
-                "__EVENTVALIDATION": parser.find(attrs={"name": "__EVENTVALIDATION"})["value"],
-                "m$Content$username": username,
-                "m$Content$password": password
-            }
-        )
+        r = self.__session.post(URL, data={
+            "time": 0,
+            "__EVENTTARGET": "m$Content$submitbtn2",
+            "__EVENTARGUMENT": "",
+            "__SCROLLPOSITION": "",
+            "__VIEWSTATEX": parser.find(attrs={"name": "__VIEWSTATEX"})["value"],
+            "__VIEWSTATEY_KEY": "",
+            "__VIEWSTATE": "",
+            "__EVENTVALIDATION": parser.find(attrs={"name": "__EVENTVALIDATION"})["value"],
+            "m$Content$username": username,
+            "m$Content$password": password
+        })
 
-    def get_user_id(self) -> int:
-        """Gets your user id
+        if r.url == URL:
+            # Authentication failed
+            raise exceptions.IncorrectCredentialsError(
+                "Incorrect credentials provided!")
 
-        Returns:
-            int: User id
-        """
-
-        r = self._request(self.__BASE_URL + "/forside.aspx")
-
-        soup = BeautifulSoup(r.text, 'html.parser')
-
-        content = soup.find(
-            'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
-
-        user_id = int(re.match(r'.*id=([0-9]+)$', content)[1])
-
-        return user_id
-
-    def get_schedule_for_student(self, elevid: int, start_date: datetime, end_date: datetime, strip_time: bool = True) -> any:
-        """Get lectio schedule for current or specific week.
-
-        Get all modules in specified time range.
-
-        Parameters:
-            elevid (int): Student id
-            start_date (:class:`datetime.datetime`): Start date
-            end_date (:class:`datetime.datetime`): End date
-            strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
-                Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
+    def school(self) -> School:
+        """Returns a :class:`lectio.models.school.School` object for the given institution id.
 
         Returns:
-            list: List containing all modules in specified time range.
+            :class:`lectio.models.school.School`: The school object for the authenticated user.
         """
 
-        replacetime = {}
-        if strip_time:
-            end_date = end_date + timedelta(days=1)
-            replacetime = {
-                "hour": 0,
-                "minute": 0,
-                "second": 0,
-            }
+        if self.__school is None:
+            self.__school = School(self)
 
-        start_date = start_date.replace(
-            **replacetime, microsecond=0).isoformat()
-        end_date = end_date.replace(**replacetime, microsecond=0).isoformat()
+        return self.__school
 
-        params = (
-            "type=ShowListAll&"
-            f"starttime={start_date}&"
-            f"endtime={end_date}&"
-            "dagsbemaerk=0&"
-            f"studentsel={elevid}"
-        )
+    def me(self) -> Me:
+        """Gets the authenticated user
 
-        schedule_request = self._request(
-            f"{self.__BASE_URL}/SkemaAvanceret.aspx?{params}")
+        Returns:
+            :class:`lectio.models.user.Me`: Own user object
+        """
 
-        soup = BeautifulSoup(schedule_request.text, 'html.parser')
+        if self.__me is None:
+            r = self._request("forside.aspx")
 
-        modules = soup.find(
-            "table", class_="list texttop lf-grid").findChildren('tr', class_=None)
+            soup = BeautifulSoup(r.text, 'html.parser')
 
-        schedule = []
-        for module in modules:
-            a = module.findChild('a')
-            module = self._parse_additionalinfo(
-                a.attrs.get('data-additionalinfo'))
-            
-            href = a.attrs.get('href')
-            if href is not None:
-                module.url = f"https://www.lectio.dk{href}"
-            schedule.append(module)
+            content = soup.find(
+                'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
 
-        return schedule
+            user_id = re.match(r'.*id=([0-9]+)$', content)[1]
 
-    def _parse_additionalinfo(self, info: str) -> Module:
-        module = Module()
+            # TODO; Add support for teachers
+            self.__me = Me(self, user_id, UserType.STUDENT)
 
-        info_list = info.split('\n')
-
-        # Parse module status
-        if info_list[0] == 'Ændret!':
-            module.status = 1
-            info_list.pop(0)
-        elif info_list[0] == 'Aflyst!':
-            module.status = 2
-            info_list.pop(0)
-        else:
-            module.status = 0
-
-        # Parse title
-        if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):
-            module.title = info_list[0]
-            info_list.pop(0)
-
-        # Parse time
-        times = info_list[0].split(" til ")
-        info_list.pop(0)
-        module.start_time = datetime.strptime(times[0], "%d/%m-%Y %H:%M")
-        if len(times[1]) == 5:
-            module.end_time = datetime.strptime(
-                times[0][:-5] + times[1], "%d/%m-%Y %H:%M")
-        else:
-            module.end_time = datetime.strptime(times[1], "%d/%m-%Y %H:%M")
-
-        # Parse subject(s)
-        subject = re.search(r"Hold: (.*)", info)
-        if subject:
-            info_list.pop(0)
-            module.subject = subject[1]
-
-        # Parse teacher(s)
-        teacher = re.search(r"Lærere?: (.*)", info)
-        if teacher:
-            info_list.pop(0)
-            module.teacher = teacher[1]
-
-        # Parse room(s)
-        room = re.search(r"Lokaler?: (.*)", info)
-        if room:
-            info_list.pop(0)
-            module.room = room[1]
-
-        # Put any additional info into extra_info
-        if info_list:
-            info_list.pop(0)
-            module.extra_info = "\n".join(info_list)
-
-        return module
+        return self.__me
 
     def _request(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
-        r = self.__session.request(method, url, **kwargs)
+        r = self.__session.request(
+            method, f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}", **kwargs)
 
-        if f"{self.__INST_ID}/login.aspx?prevurl=" in r.url:
-            self._authenticate()
-            r = self.__session.get(url)
-            if f"{self.__INST_ID}/login.aspx?prevurl=" in r.url:
+        if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
+            if not self._authenticate():
+                raise exceptions.UnauthenticatedError("Unauthenticated")
+            r = self.__session.get(
+                f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}")
+            if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
                 raise exceptions.IncorrectCredentialsError(
                     "Could not restore session, probably incorrect credentials")
 

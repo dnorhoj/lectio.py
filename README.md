@@ -1,7 +1,9 @@
 # lectio.py
 
-![](https://img.shields.io/github/license/dnorhoj/lectio.py)
-
+[![License](https://img.shields.io/github/license/dnorhoj/lectio.py)](LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/lectiopy/badge/?version=latest)](https://lectiopy.readthedocs.io/en/latest/?badge=latest)
+[![PyPi version](https://img.shields.io/pypi/v/lectio.py.svg)](https://pypi.org/project/lectio.py/)
+[![PyPi supported python versions](https://img.shields.io/pypi/pyversions/lectio.py.svg)](https://python.org/)
 
 *Please note: This library is nowhere close to done.*
 
@@ -14,13 +16,37 @@ You can read the documentation
 
 ## How do i use this?
 
-To use this repository feel free to check the documentation [here](https://lectiopy.rtfd.io/).
+You can install this library via `pip`:
+
+    pip install lectio.py
+
+For a quickstart guide as well as some examples, you can read the documentation [here](https://lectiopy.rtfd.io/).
+
+## Progress
+
+<details>
+    <summary>Implementation progress</summary>
+
+* [x] Schedule
+* [x] User info
+* [ ] Absence
+* [ ] Mail
+* [ ] Assignments
+* [ ] Homework
+* [ ] Surveys (Probably not going to be implemented)
+* [ ] Grades
+* [ ] Search for students / teachers
+
+</details>
 
 ## Todo
 
-* [ ] Finish authentication check
 * [ ] Make a better README
-* [ ] Start doing the hard part (basically everything)
+* [ ] Quickstart, Examples, etc.
+
+## Known bugs
+
+* Not made to work with teacher accounts (as i have no way of testing anything)
 
 ## Contributing
 
