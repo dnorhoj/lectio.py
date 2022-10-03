@@ -82,7 +82,7 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
     for module in modules:
         a = module.findChild('a')
         module = parse_additionalinfo(
-            a.attrs.get('data-additionalinfo'))
+            lectio, a.attrs.get('data-additionalinfo'))
 
         # Add href to module
         href = a.attrs.get('href')
@@ -94,8 +94,8 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
     return schedule
 
 
-def parse_additionalinfo(info: str) -> Module:
-    module = Module()
+def parse_additionalinfo(lectio: 'Lectio', info: str) -> Module:
+    module = Module(lectio)
 
     info_list = info.split('\n')
 
