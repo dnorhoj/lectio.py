@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from ..helpers.schedule import ModuleStatus
 from ..helpers.schedule import get_schedule
 
 if TYPE_CHECKING:
@@ -61,7 +62,9 @@ class Room:
         if date is None:
             date = datetime.now()
 
-        return self.get_schedule(date, date, False) == []
+        sched = self.get_schedule(date, date + timedelta(seconds=1), False)
+
+        return len(sched) == 0 or all(map(lambda x: x.status == ModuleStatus.CANCELLED, sched))
 
     def __repr__(self) -> str:
         return f"<Room name={self.name} id={self.id}>"

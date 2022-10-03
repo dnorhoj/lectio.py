@@ -66,7 +66,8 @@ class School:
         room_select = soup.find(
             "select", {"id": "m_Content_RoomMC_totalSet"})
         for room in room_select.find_all("option"):
-            self.rooms.append(Room(self._lectio, room["value"][2:], room.text.strip()))
+            self.rooms.append(
+                Room(self._lectio, room["value"][2:], room.text.strip()))
 
     def get_user_by_id(self, user_id: int, user_type: UserType = None) -> User:
         """Gets a user by their id
@@ -132,7 +133,7 @@ class School:
             query(str): Name to search for
 
         Yields:
-            : class: `lectio.User`: User object
+            :class: `lectio.models.user.User`: User object
         """
 
         for student in self.students:
@@ -146,11 +147,25 @@ class School:
             query(str): Name to search for
 
         Yields:
-            : class: `lectio.models.user.User`: User object
+            :class: `lectio.models.user.User`: User object
         """
 
         yield from self.search_for_students(query)
         yield from self.search_for_teachers_by_name(query)
+
+    def search_for_rooms(self, query: str) -> Generator[Room, None, None]:
+        """Search for room
+
+        Args:
+            query(str): Name to search for
+
+        Yields:
+            :class: `lectio.models.room.Room`: Room object
+        """
+
+        for room in self.rooms:
+            if query.lower() in room.name.lower():
+                yield room
 
     def __repr__(self) -> str:
         return f"<School name={self.name}>"
