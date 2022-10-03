@@ -51,12 +51,15 @@ class Room:
             strip_time
         )
 
-    def is_available(self, date: 'datetime') -> bool:
+    def is_available(self, date: 'datetime' = None) -> bool:
         """Check if room is available at a given time
 
         Args:
-            datetime (:class:`datetime.datetime`): Datetime to check
+            datetime (:class:`datetime.datetime`): Datetime to check (defaults to now)
         """
+
+        if date is None:
+            date = datetime.now()
 
         return self.get_schedule(date, date, False) == []
 
