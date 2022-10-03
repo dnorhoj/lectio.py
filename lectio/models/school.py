@@ -67,7 +67,7 @@ class School:
             "select", {"id": "m_Content_RoomMC_totalSet"})
         for room in room_select.find_all("option"):
             self.rooms.append(
-                Room(self._lectio, room["value"][2:], room.text.strip()))
+                Room(self._lectio, int(room["value"][2:]), room.text.strip()))
 
     def get_user_by_id(self, user_id: int, user_type: UserType = None) -> User:
         """Gets a user by their id
@@ -152,7 +152,7 @@ class School:
 
         yield from self.search_for_students(query)
         yield from self.search_for_teachers_by_name(query)
-    
+
     def get_room_by_id(self, room_id: int) -> Room:
         """Gets a room by its id
 
