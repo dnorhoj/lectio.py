@@ -101,13 +101,13 @@ def parse_additionalinfo(lectio: 'Lectio', info: str) -> Module:
 
     # Parse module status
     if info_list[0] == 'Ændret!':
-        module.status = module.status.CHANGED
+        module.status = ModuleStatus.CHANGED
         info_list.pop(0)
     elif info_list[0] == 'Aflyst!':
-        module.status = module.status.CANCELLED
+        module.status = ModuleStatus.CANCELLED
         info_list.pop(0)
     else:
-        module.status = module.status.NORMAL
+        module.status = ModuleStatus.NORMAL
 
     # Parse title
     if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):
