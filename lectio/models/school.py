@@ -68,11 +68,11 @@ class School:
         for user in room_select.find_all("option"):
             self.rooms.append(Room(self._lectio, user["value"][2:], name))
 
-    def get_user_by_id(self, user_id: str, user_type: UserType = None) -> User:
+    def get_user_by_id(self, user_id: int, user_type: UserType = None) -> User:
         """Gets a user by their id
 
         Args:
-            user_id (str): The id of the user
+            user_id (int): The id of the user
             user_type (:class:`lectio.models.user.UserType`): The type of the user (student or teacher)
 
         Returns:
@@ -81,6 +81,8 @@ class School:
         Raises:
             :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
         """
+
+        user_id = int(user_id)
 
         if user_type == UserType.STUDENT or user_type is None:
             for student in self.students:
