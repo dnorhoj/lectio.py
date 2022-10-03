@@ -1,3 +1,5 @@
 # flake8: noqa
-from .school import School
+from .module import Module
+from .room import Room
 from .user import User, Me, UserType
+from .school import School

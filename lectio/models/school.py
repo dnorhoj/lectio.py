@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Generator, List
 from bs4 import BeautifulSoup
-import re
-from urllib.parse import quote
 
 from .user import User, UserType
 from ..import exceptions
+from .room import Room
 
 if TYPE_CHECKING:
     from .. import Lectio
@@ -23,25 +22,58 @@ class School:
         lectio (:class:`lectio.Lectio`): Lectio object
     """
 
+    students: List[User]
+    teachers: List[User]
+    groups: List[None]
+    rooms: List[Room]
+    name: str
+
     def __init__(self, lectio: 'Lectio') -> None:
         self._lectio = lectio
         self.__populate()
 
     def __populate(self) -> None:
-        r = self._lectio._request("forside.aspx")
+        r = self._lectio._request("FindSkemaAdv.aspx")
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
         self.name = soup.find(
-            "div", {"id": "s_m_masterleftDiv"}).text.strip().split("\n")[0].replace("\r", "")
+            "div", {"id": "m_masterleftDiv"}).text.strip().split("\n")[0].replace("\r", "")
 
-    def get_user_by_id(self, user_id: str, user_type: UserType = UserType.STUDENT, check: bool = True) -> User:
+        # Get school's students
+        self.students = []
+        student_select = soup.find(
+            "select", {"id": "m_Content_StudentMC_totalSet"})
+        for user in student_select.find_all("option"):
+            name = user.text.strip().split(" (")[0]
+
+            self.students.append(
+                User(self._lectio, int(user["value"][1:]), UserType.STUDENT, lazy=True, name=name))
+
+        # Get school's teachers
+        self.teachers = []
+        teacher_select = soup.find(
+            "select", {"id": "m_Content_TeacherMC_totalSet"})
+        for user in teacher_select.find_all("option"):
+            teacher_data = user.text.strip().split(" (")
+            name = teacher_data[0]
+            initials = teacher_data[1][:-1]
+            self.teachers.append(
+                User(self._lectio, int(user["value"][1:]), UserType.TEACHER, lazy=True, name=name, initials=initials))
+
+        # Get school's rooms
+        self.rooms = []
+        room_select = soup.find(
+            "select", {"id": "m_Content_RoomMC_totalSet"})
+        for user in room_select.find_all("option"):
+            self.rooms.append(Room(self._lectio, user["value"][2:], name))
+
+    def get_user_by_id(self, user_id: str, user_type: UserType = None) -> User:
         """Gets a user by their id
 
         Args:
             user_id (str): The id of the user
             user_type (:class:`lectio.models.user.UserType`): The type of the user (student or teacher)
-            check (bool): Whether to check if the user exists (slower)
 
         Returns:
             :class:`lectio.models.user.User`: User object
@@ -50,174 +82,73 @@ class School:
             :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
         """
 
-        if check:
-            # Check if user exists
-            r = self._lectio._request(
-                f"SkemaNy.aspx?type={user_type}&{user_type}id={user_id}")
+        if user_type == UserType.STUDENT or user_type is None:
+            for student in self.students:
+                if student.id == user_id:
+                    return student
 
-            soup = BeautifulSoup(r.text, 'html.parser')
+        if user_type == UserType.TEACHER or user_type is None:
+            for teacher in self.teachers:
+                if teacher.id == user_id:
+                    return teacher
 
-            if soup.title.string.strip().startswith("Fejl - Lectio"):
-                raise exceptions.UserDoesNotExistError(
-                    f"The {user_type.get_str()} with the id '{user_id}' does not exist!")
+        raise exceptions.UserDoesNotExistError(
+            f"User with id {user_id} does not exist")
 
-        return User(self._lectio, user_id, user_type)
-
-    def get_teachers(self) -> List[User]:
-        """Get all teachers
-
-        Returns:
-            list(:class:`lectio.models.user.User`): List of teachers
-        """
-
-        r = self._lectio._request("FindSkema.aspx?type=laerer&sortering=id")
-
-        soup = BeautifulSoup(r.text, 'html.parser')
-
-        teachers = []
-
-        # Container containing all teachers
-        lst = soup.find("ul", {"class": "ls-columnlist mod-onechild"})
-
-        if lst is None:
-            return []
-
-        # Iterate and create user objects
-        for i in lst.find_all("li"):
-            user_id = int(i.a["href"].split("=")[-1])
-
-            user_name = i.a.contents[1].strip()
-
-            initial_span = i.a.find('span')
-
-            user_initials = None
-            if initial_span is not None:
-                user_initials = initial_span.text.strip()
-
-            teachers.append(User(self._lectio,
-                                 user_id,
-                                 UserType.TEACHER,
-                                 lazy=True,
-                                 name=user_name,
-                                 initials=user_initials))
-
-        return teachers
-
-    def search_for_teachers(self, query_name: str, query_initials: str = None) -> List[User]:
+    def search_for_teachers_by_name(self, query: str) -> Generator[User, None, None]:
         """Search for teachers by name or initials
 
         Args:
-            query_name (str): Name to search for
-            query_initials (Optional[str]): Initials to search for
-
-        Returns:
-            list(:class:`lectio.models.user.User`): List of teachers
-        """
-
-        res = []
-
-        for teacher in self.get_teachers():
-            if query_initials and query_initials.lower() in teacher.initials.lower():
-                res.append(teacher)
-            elif query_name.lower() in teacher.name.lower():
-                res.append(teacher)
-
-        return res
-
-    def get_students_by_letter(self, letter: str) -> List[User]:
-        """Get students by first letter of name
-
-        Args:
-            letter (str): Letter to search for
-
-        Returns:
-            list(:class:`lectio.models.user.User`): List of students
-        """
-
-        r = self._lectio._request(
-            "FindSkema.aspx?type=elev&forbogstav=" + quote(letter.upper()))
-
-        soup = BeautifulSoup(r.text, 'html.parser')
-
-        students = []
-
-        # Container containing all students
-        lst = soup.find("ul", {"class": "ls-columnlist mod-onechild"})
-
-        # Shouldn't happen in cases other than ``len(letter) > 1`` or if letter is not a valid character
-        if lst is None:
-            return []
-
-        # Iterate and create user objects
-        for i in lst.find_all("li"):
-            user_id = int(i.a["href"].split("=")[-1])
-
-            user_info = i.a.text.strip()
-
-            # Search for name and class
-            search = re.search(
-                r"(?P<name>.*) \((?P<class_name>.*?) \d+?\)", user_info)
-
-            if search is None:
-                continue
-
-            students.append(User(self._lectio,
-                                 user_id,
-                                 lazy=True,
-                                 name=search.group("name"),
-                                 class_name=search.group("class_name")))
-
-        return students
-
-    def search_for_students(self, query: str) -> List[User]:
-        """Search for user
-
-        Note:
-            This method is not very reliable, and will sometimes return no results.
-            Also, the query has to be from the beginning of the name.
-
-            Example: Searching for "John" will return "John Doe", but searching for "Doe" might not.
-
-        Args:
             query (str): Name to search for
 
-        Returns:
-            list(:class:`lectio.User`): List of users
+        Yields:
+            :class:`lectio.models.user.User`: Teacher object
         """
 
-        res = []
+        for teacher in self.teachers:
+            if query.lower() in teacher.name.lower():
+                yield teacher
 
-        for student in self.get_students_by_letter(query[0]):
+    def search_for_teachers_by_initials(self, query: str) -> Generator[User, None, None]:
+        """Search for teachers by initials
+
+        Args:
+            query (str): Initials to search for
+
+        Yields:
+            :class:`lectio.models.user.User`: Teacher object
+        """
+
+        for teacher in self.teachers:
+            if query.lower() in teacher.initials.lower():
+                yield teacher
+
+    def search_for_students(self, query: str) -> Generator[User, None, None]:
+        """Search for user
+
+        Args:
+            query(str): Name to search for
+
+        Yields:
+            : class: `lectio.User`: User object
+        """
+
+        for student in self.students:
             if query.lower() in student.name.lower():
-                res.append(student)
+                yield student
 
-        return res
-
-    def get_all_students(self) -> List[User]:
-        """Get all students
-
-        Returns:
-            list(:class:`User`): List of students
-        """
-
-        res = []
-
-        for letter in "abcdefghijklmnopqrstuvwxyzæøå":
-            res.extend(self.get_students_by_letter(letter))
-
-        return res
-
-    def search_for_users(self, query: str) -> List[User]:
+    def search_for_users(self, query: str) -> Generator[User, None, None]:
         """Search for user
 
         Args:
-            query (str): Name to search for
+            query(str): Name to search for
 
-        Returns:
-            list(:class:`lectio.models.user.User`): List of users
+        Yields:
+            : class: `lectio.models.user.User`: User object
         """
 
-        return [*self.search_for_students(query), *self.search_for_teachers(query)]
+        yield from self.search_for_students(query)
+        yield from self.search_for_teachers_by_name(query)
 
     def __repr__(self) -> str:
-        return f"School({self.name})"
+        return f"<School name={self.name}>"

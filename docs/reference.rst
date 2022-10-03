@@ -30,6 +30,6 @@ User
 Misc
 ----
 
-.. autoclass:: lectio.helpers.schedule.Module
+.. autoclass:: lectio.models.module.Module
     :members:
     :undoc-members:

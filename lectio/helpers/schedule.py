@@ -2,55 +2,26 @@ import re
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, List
 from bs4 import BeautifulSoup
+from enum import Enum
+
+from ..models.module import Module
 
 if TYPE_CHECKING:
     from ..lectio import Lectio
 
 
-class Module:
-    """Lectio module object
+class ModuleStatus(Enum):
+    NORMAL = 0
+    CHANGED = 1
+    CANCELLED = 2
 
-    Represents a lectio module
-
-    Args:
-        title (str|None): Optional description of module (not present in all modules)
-        subject (str|None): "Hold" from lectio, bascially which subject.
-            Example: `1.a Da`
-        teacher (str|None): Initials of teacher.
-            Example: `abcd`
-        room (str|None): Room name of module.
-            Example: `0.015`
-        extra_info (str|None): Extra info from module, includes homework and other info.
-        start_time (:class:`datetime.datetime`): Start time of module
-        end_time (:class:`datetime.datetime`): End time of module
-        status (int): 0=normal, 1=changed, 2=cancelled
-        url (str|None): Url for more info for the module
-    """
-
-    def __init__(self, **kwargs) -> None:
-        self.title = kwargs.get("title")
-        self.subject = kwargs.get("subject")
-        self.teacher = kwargs.get("teacher")
-        self.room = kwargs.get("room")
-        self.extra_info = kwargs.get("extra_info")
-        self.start_time = kwargs.get("start_time")
-        self.end_time = kwargs.get("end_time")
-        self.status = kwargs.get("status")
-        self.url = kwargs.get("url")
-
-    def __repr__(self) -> str:
-        return f"Module({self.subject}, {self.start_time}, {self.end_time})"
-
-    def display(self):
-        print(f"Title:      {self.title}")
-        print(f"Subject(s): {self.subject}")
-        print(f"Teacher(s): {self.teacher}")
-        print(f"Room(s):    {self.room}")
-        print(f"Starts at:  {self.start_time}")
-        print(f"Ends at:    {self.end_time}")
-        print(f"Status:     {self.status}")
-        print(f"URL:        {self.url}")
-        print(f"Extra info:\n\n{self.extra_info}")
+    def __str__(self) -> str:
+        if self.value == self.NORMAL.value:
+            return "normal"
+        elif self.value == self.CHANGED.value:
+            return "changed"
+        elif self.value == self.CANCELLED.value:
+            return "cancelled"
 
 
 def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_date: datetime, strip_time: bool = True) -> List[Module]:
@@ -130,13 +101,13 @@ def parse_additionalinfo(info: str) -> Module:
 
     # Parse module status
     if info_list[0] == 'Ændret!':
-        module.status = 1
+        module.status = module.status.CHANGED
         info_list.pop(0)
     elif info_list[0] == 'Aflyst!':
-        module.status = 2
+        module.status = module.status.CANCELLED
         info_list.pop(0)
     else:
-        module.status = 0
+        module.status = module.status.NORMAL
 
     # Parse title
     if not re.match(r'^[0-9]{1,2}\/[0-9]{1,2}-[0-9]{4} [0-9]{2}:[0-9]{2}', info_list[0]):

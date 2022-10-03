@@ -6,8 +6,10 @@ from ..helpers.schedule import get_schedule
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from ..helpers.schedule import Module
     from ..lectio import Lectio
+    from .module import Module
+
+undef = object()
 
 
 class UserType(Enum):
@@ -16,11 +18,10 @@ class UserType(Enum):
     Example:
         >>> from lectio import Lectio
         >>> from lectio.models.user import UserType
-        >>> lec = Lectio(123)
-        >>> lec.authenticate("username", "password")
+        >>> lec = Lectio(123, "username", "password")
         >>> me = lec.me()
         >>> print(me.type)
-        0
+        <UserType.STUDENT: 0>
         >>> print(me.type == UserType.STUDENT)
         True
     """
@@ -54,7 +55,7 @@ class User:
 
     Note:
         This class should not be instantiated directly,
-        but rather through the :meth:`lectio.Lectio.get_user`
+        but rather through the :attr:`lectio.Lectio.me`
         or :meth:`lectio.models.school.School.search_for_users` methods or similar.
 
     Args:
@@ -68,10 +69,10 @@ class User:
         type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
     """
 
-    __name = None
-    __initials = None
-    __class_name = None
-    __image = None
+    __name = undef
+    __initials = undef
+    __class_name = undef
+    __image = undef
 
     def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, *, lazy=False, **user_data) -> None:
         self._lectio = lectio
@@ -82,18 +83,16 @@ class User:
         if not lazy:
             self.__populate()
         else:
-            self.__name = user_data.get("name")
-            self.__initials = user_data.get("initials")
-            self.__class_name = user_data.get("class_name")
-            self.__image = user_data.get("image")
+            self.__name = user_data.get("name", undef)
+            self.__initials = user_data.get("initials", undef)
+            self.__class_name = user_data.get("class_name", undef)
+            self.__image = user_data.get("image", undef)
 
     def __populate(self) -> None:
         """Populate user object
 
         Populates the user object with data from lectio, such as name, class name, etc.
         """
-
-        # TODO; Check if user is student or teacher
 
         # Get user's schedule for today
         r = self._lectio._request(
@@ -106,8 +105,15 @@ class User:
         title = " ".join(title.split()[1:])
 
         if self.type == UserType.STUDENT:
-            self.__name = title.split(", ")[0]
-            self.__class_name = title.split(", ")[1].split(" - ")[0]
+            name_class = title.split(", ")
+            self.__name = name_class[0]
+
+            # Check if user has a class
+            if len(name_class) > 1:
+                self.__class_name = title.split(", ")[1].split(" - ")[0]
+            else:
+                self.__class_name = None
+
         elif self.type == UserType.TEACHER:
             self.__initials, self.__name, *_ = title.split(" - ")
 
@@ -140,13 +146,19 @@ class User:
         )
 
     def __repr__(self) -> str:
-        return f"User({self.type.get_str().capitalize()}, {self.id})"
+        return f"<User type={self.type.get_str().capitalize()} id={self.id}>"
+
+    @property
+    def url(self) -> str:
+        """str: User's lectio url"""
+
+        return f"https://www.lectio.dk/lectio/{self._lectio.inst_id}/SkemaNy.aspx?type={self.type}&{self.type}id={self.id}"
 
     @property
     def name(self) -> str:
         """str: User's name"""
 
-        if not self.__name:
+        if self.__name is undef:
             self.__populate()
 
         return self.__name
@@ -155,7 +167,7 @@ class User:
     def image(self) -> str:
         """str: User's image url"""
 
-        if not self.__image:
+        if self.__image is undef:
             self.__populate()
 
         return self.__image
@@ -167,7 +179,7 @@ class User:
         if self.type == UserType.STUDENT:
             return None
 
-        if not self.__initials:
+        if self.__initials is undef:
             self.__populate()
 
         return self.__initials
@@ -179,7 +191,7 @@ class User:
         if self.type == UserType.TEACHER:
             return None
 
-        if not self.__class_name:
+        if self.__class_name is undef:
             self.__populate()
 
         return self.__class_name
