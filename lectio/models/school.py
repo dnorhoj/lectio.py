@@ -65,8 +65,8 @@ class School:
         self.rooms = []
         room_select = soup.find(
             "select", {"id": "m_Content_RoomMC_totalSet"})
-        for user in room_select.find_all("option"):
-            self.rooms.append(Room(self._lectio, user["value"][2:], name))
+        for room in room_select.find_all("option"):
+            self.rooms.append(Room(self._lectio, room["value"][2:], room.text.strip()))
 
     def get_user_by_id(self, user_id: int, user_type: UserType = None) -> User:
         """Gets a user by their id
