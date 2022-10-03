@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, List
+from datetime import datetime
 
 from ..helpers.schedule import get_schedule
 
 if TYPE_CHECKING:
-    from datetime import datetime
     from ..lectio import Lectio
     from .module import Module
 
@@ -28,7 +28,7 @@ class Room:
         self.id = room_id
         self.name = name
 
-    def get_schedule(self, start_date: 'datetime', end_date: 'datetime', strip_time: bool) -> List['Module']:
+    def get_schedule(self, start_date: datetime, end_date: datetime, strip_time: bool) -> List['Module']:
         """Get schedule for room
 
         Note:
@@ -51,7 +51,7 @@ class Room:
             strip_time
         )
 
-    def is_available(self, date: 'datetime' = None) -> bool:
+    def is_available(self, date: datetime = None) -> bool:
         """Check if room is available at a given time
 
         Args:
