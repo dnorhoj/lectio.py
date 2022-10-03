@@ -7,13 +7,12 @@ API Reference
     :members:
     :undoc-members:
 
+Models
+------
 
 .. autoclass:: lectio.models.school.School
     :members:
     :undoc-members:
-
-User
-----
 
 .. autoclass:: lectio.models.user.User
     :members:
@@ -23,13 +22,28 @@ User
     :members:
     :undoc-members:
 
-.. autoclass:: lectio.models.user.UserType
+.. autoclass:: lectio.models.module.Module
+    :members:
+    :undoc-members:
+
+.. autoclass:: lectio.models.room.Room
     :members:
     :undoc-members:
 
 Misc
 ----
 
-.. autoclass:: lectio.models.module.Module
+.. autoclass:: lectio.models.user.UserType
+    :members:
+    :undoc-members:
+
+.. autoclass:: lectio.helpers.schedule.ModuleStatus
+    :members:
+    :undoc-members:
+
+Exceptions
+==========
+
+.. automodule:: lectio.exceptions
     :members:
     :undoc-members:

@@ -19,7 +19,7 @@ Information
 
 **Useful links:** :doc:`/installation` | :doc:`/quickstart`
 
-**Reference:** :doc:`/reference` | :doc:`/exceptions`
+**Reference:** :doc:`/reference`
 
 Table of contents
 -----------------
@@ -30,4 +30,3 @@ Table of contents
    installation
    quickstart
    reference
-   exceptions
