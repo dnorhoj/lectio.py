@@ -19,3 +19,7 @@ class InstitutionDoesNotExistError(LectioError):
 
 class UserDoesNotExistError(LectioError):
     """The user does not exist."""
+
+
+class RoomDoesNotExistError(LectioError):
+    """The room does not exist."""

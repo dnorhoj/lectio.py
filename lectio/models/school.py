@@ -152,6 +152,28 @@ class School:
 
         yield from self.search_for_students(query)
         yield from self.search_for_teachers_by_name(query)
+    
+    def get_room_by_id(self, room_id: int) -> Room:
+        """Gets a room by its id
+
+        Args:
+            room_id (int): The id of the room
+
+        Returns:
+            :class:`lectio.models.room.Room`: Room object
+
+        Raises:
+            :class:`lectio.exceptions.RoomDoesNotExistError`: When the room does not exist
+        """
+
+        room_id = int(room_id)
+
+        for room in self.rooms:
+            if room.id == room_id:
+                return room
+
+        raise exceptions.RoomDoesNotExistError(
+            f"Room with id {room_id} does not exist")
 
     def search_for_rooms(self, query: str) -> Generator[Room, None, None]:
         """Search for room
