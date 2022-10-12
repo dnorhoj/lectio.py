@@ -42,10 +42,6 @@ class Lectio:
 
     def _authenticate(self, username: str = None, password: str = None):
         if username is None or password is None:
-            if len(self.__CREDS) != 2:
-                raise exceptions.UnauthenticatedError(
-                    "No authentication details provided and no saved credentials found!")
-
             username, password = self.__CREDS
 
         self.log_out()  # Clear session
@@ -115,6 +111,21 @@ class Lectio:
         return self.__school
 
     def _request(self, url: str, method: str = "GET", full_url: bool = False, **kwargs) -> requests.Response:
+        """Makes a request with the authenticated lectio session and returns the response
+
+        Args:
+            url (str): The url to request
+            method (str, optional): HTTP method. Defaults to "GET".
+            full_url (bool, optional): Whether to use the full url or not. Defaults to False.
+
+        Raises:
+            exceptions.UnauthenticatedError: If authentication fails
+            exceptions.IncorrectCredentialsError: If credentials are incorrect
+
+        Returns:
+            requests.Response: The response object
+        """
+
         if not full_url:
             url = f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}"
 
@@ -122,8 +133,7 @@ class Lectio:
             method, url, **kwargs)
 
         if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
-            if not self._authenticate():
-                raise exceptions.UnauthenticatedError("Unauthenticated")
+            self._authenticate()
             r = self.__session.get(
                 f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}")
             if f"{self.inst_id}/login.aspx?prevurl=" in r.url:

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..lectio import Lectio
+    from ..models import Room
     from .user import User
 
 
@@ -41,14 +42,35 @@ class Module:
     def get_homework(self) -> str:
         raise NotImplementedError("Not implemented yet")
 
-    def get_teacher(self) -> 'User':
+    def get_extra_info(self) -> str:
+        raise NotImplementedError("Not implemented yet")
+
+    def get_teachers(self) -> 'User':
         """Get teacher
 
         Returns:
             lectio.models.user.User: Teacher object
         """
 
-        return self._lectio.get_school().search_for_teachers_by_name(self.teacher)[0]
+        raise NotImplementedError("Not implemented yet")
+
+    def get_rooms(self) -> 'Room':
+        """Get room
+
+        Returns:
+            lectio.models.room.Room: Room object
+        """
+
+        raise NotImplementedError("Not implemented yet")
+
+    def get_team(self) -> None:
+        """Get team
+
+        Returns:
+            TODO: Team name
+        """
+
+        raise NotImplementedError("Not implemented yet")
 
     def __repr__(self) -> str:
         return f"<Module subject={self.subject} start={self.start_time} end={self.end_time}>"
