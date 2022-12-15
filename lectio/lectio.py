@@ -89,7 +89,7 @@ class Lectio:
 
             user_id = re.match(r'.*id=([0-9]+)$', content)[1]
 
-            # TODO; Add support for teachers
+            # No support for teachers yet as I can't test
             self.__me = Me(self, user_id, UserType.STUDENT)
 
         return self.__me

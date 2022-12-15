@@ -1,6 +1,6 @@
 from enum import Enum
 from bs4 import BeautifulSoup
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from ..helpers.schedule import get_schedule
 
@@ -58,41 +58,52 @@ class User:
         but rather through the :attr:`lectio.Lectio.me`
         or :meth:`lectio.models.school.School.search_for_users` methods or similar.
 
+    Note:
+        A :class:`lectio.models.user.User` object is a lazy object by default,
+        which means that no data is fetched from lectio on instantiation.
+
+        When you access any non-lazy attribute, the user object will be populated with data from lectio.
+
     Args:
         lectio (:class:`lectio.Lectio`): Lectio object
         user_id (int): User id
         user_type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
-        lazy (bool): Whether to not populate user object on instantiation (default: False)
+        lazy (bool): Whether to not populate user object on instantiation (default: True)
 
     Attributes:
         id (int): User id
+        populated (bool): Whether user object has been populated with data from lectio
+                          if this is False, the user object is a lazy object and only contains available data (often just name and id)
         type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
     """
 
-    __name = undef
-    __initials = undef
-    __class_name = undef
-    __image = undef
+    __class_name = None
+    __image = None
+    populated = False
 
-    def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, *, lazy=False, **user_data) -> None:
+    def __init__(self, lectio: 'Lectio', user_id: int, name: str, user_type: UserType = UserType.STUDENT, *, lazy=True, **kwargs) -> None:
         self._lectio = lectio
+
         self.id = user_id
-
         self.type = user_type
+        self.name = name
+        # Will be none if user is not teacher
+        self.initials = kwargs.get('initials')
 
+        # Populate ovject if specified as non-lazy
         if not lazy:
-            self.__populate()
-        else:
-            self.__name = user_data.get("name", undef)
-            self.__initials = user_data.get("initials", undef)
-            self.__class_name = user_data.get("class_name", undef)
-            self.__image = user_data.get("image", undef)
+            self.populate()
 
-    def __populate(self) -> None:
+    def populate(self) -> None:
         """Populate user object
 
         Populates the user object with data from lectio, such as name, class name, etc.
         """
+
+        if self.populated:
+            return
+
+        self.populated = True
 
         # Get user's schedule for today
         r = self._lectio._request(
@@ -114,13 +125,14 @@ class User:
             else:
                 self.__class_name = None
 
-        elif self.type == UserType.TEACHER:
-            self.__initials, self.__name, *_ = title.split(" - ")
+        # elif self.type == UserType.TEACHER:
+        #     self.__initials, self.__name, *_ = title.split(" - ")
 
         src = soup.find(
             "img", {"id": "s_m_HeaderContent_picctrlthumbimage"}).get("src")
 
-        self.__image = f"https://www.lectio.dk{src}&fullsize=1"
+        if "defaultfoto" not in src:
+            self.__image = f"https://www.lectio.dk{src}&fullsize=1"
 
     def get_schedule(self, start_date: 'datetime', end_date: 'datetime', strip_time: bool = True) -> List['Module']:
         """Get schedule for user
@@ -154,49 +166,36 @@ class User:
 
         return f"https://www.lectio.dk/lectio/{self._lectio.inst_id}/SkemaNy.aspx?type={self.type}&{self.type}id={self.id}"
 
-    @property
-    def name(self) -> str:
-        """str: User's name"""
+    def get_image_url(self) -> str:
+        """Get user's image url
 
-        if self.__name is undef:
-            self.__populate()
+        Returns:
+            str: User's image url
+        """
 
-        return self.__name
-
-    @property
-    def image(self) -> str:
-        """str: User's image url"""
-
-        if self.__image is undef:
-            self.__populate()
+        self.populate()
 
         return self.__image
 
-    @property
-    def initials(self) -> str:
-        """str|None: User's initials (only for teachers)"""
+    def get_class_name(self) -> Optional[str]:
+        """Get user's class name
 
-        if self.type == UserType.STUDENT:
-            return None
+        Only for :class:`lectio.models.user.UserType.STUDENT`.
 
-        if self.__initials is undef:
-            self.__populate()
-
-        return self.__initials
-
-    @property
-    def class_name(self) -> str:
-        """str|None: User's class name (only for students)"""
+        Returns:
+            str|None: Class name or ``None`` if user is :class:`lectio.models.user.UserType.TEACHER`.
+        """
 
         if self.type == UserType.TEACHER:
             return None
 
-        if self.__class_name is undef:
-            self.__populate()
+        self.populate()
 
         return self.__class_name
 
     def __eq__(self, __o: object) -> bool:
+        # Equality check
+
         if not isinstance(__o, User):
             return False
 

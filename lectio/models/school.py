@@ -48,7 +48,7 @@ class School:
             name = user.text.strip().split(" (")[0]
 
             self.students.append(
-                User(self._lectio, int(user["value"][1:]), UserType.STUDENT, lazy=True, name=name))
+                User(self._lectio, int(user["value"][1:]), name, UserType.STUDENT))
 
         # Get school's teachers
         self.teachers = []
@@ -59,7 +59,7 @@ class School:
             name = teacher_data[0]
             initials = teacher_data[1][:-1]
             self.teachers.append(
-                User(self._lectio, int(user["value"][1:]), UserType.TEACHER, lazy=True, name=name, initials=initials))
+                User(self._lectio, int(user["value"][1:]), name, UserType.TEACHER, initials=initials))
 
         # Get school's rooms
         self.rooms = []
