@@ -36,9 +36,7 @@ class Lectio:
         self.inst_id = inst_id
         self.__CREDS = [username, password]
 
-        self._authenticate(username, password)
-
-        self.__CREDS = []
+        self._authenticate()
 
     def _authenticate(self, username: str = None, password: str = None):
         if username is None or password is None:
@@ -129,13 +127,11 @@ class Lectio:
         if not full_url:
             url = f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}"
 
-        r = self.__session.request(
-            method, url, **kwargs)
+        r = self.__session.request(method, url, **kwargs)
 
         if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
             self._authenticate()
-            r = self.__session.get(
-                f"https://www.lectio.dk/lectio/{str(self.inst_id)}/{url}")
+            r = self.__session.request(method, url, **kwargs)
             if f"{self.inst_id}/login.aspx?prevurl=" in r.url:
                 raise exceptions.IncorrectCredentialsError(
                     "Could not restore session, probably incorrect credentials")
