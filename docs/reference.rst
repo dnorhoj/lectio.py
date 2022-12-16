@@ -30,6 +30,10 @@ Models
     :members:
     :undoc-members:
 
+.. autoclass:: lectio.models.absence.Absence
+    :members:
+    :undoc-members:
+
 Misc
 ----
 

@@ -1,10 +1,9 @@
-import re
 import requests
 from bs4 import BeautifulSoup
 
 from . import exceptions
 
-from .models.user import Me, UserType
+from .models.user import Me
 from .models.school import School
 
 
@@ -30,8 +29,11 @@ class Lectio:
     __school: School = None
     __me: Me = None
 
-    def __init__(self, inst_id: int, username: str, password: str) -> None:
+    def __init__(self, inst_id: int, username: str, password: str, **kwargs) -> None:
         self.__session = requests.Session()
+        self.__session.headers.update({
+            "User-Agent": kwargs.get("user_agent", "lectio.py/0.3.0")
+        })
 
         self.inst_id = inst_id
         self.__CREDS = [username, password]
@@ -80,17 +82,7 @@ class Lectio:
         """
 
         if self.__me is None:
-            r = self._request("forside.aspx")
-
-            soup = BeautifulSoup(r.text, 'html.parser')
-
-            content = soup.find(
-                'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
-
-            user_id = re.match(r'.*id=([0-9]+)$', content)[1]
-
-            # No support for teachers yet as I can't test
-            self.__me = Me(self, user_id, UserType.STUDENT)
+            self.__me = Me(self)
 
         return self.__me
 

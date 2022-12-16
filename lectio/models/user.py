@@ -1,15 +1,15 @@
 from enum import Enum
 from bs4 import BeautifulSoup
 from typing import TYPE_CHECKING, List, Optional
+import re
 
 from ..helpers.schedule import get_schedule
+from .absence import Absence
 
 if TYPE_CHECKING:
     from datetime import datetime
     from ..lectio import Lectio
     from .module import Module
-
-undef = object()
 
 
 class UserType(Enum):
@@ -81,7 +81,7 @@ class User:
     __image = None
     populated = False
 
-    def __init__(self, lectio: 'Lectio', user_id: int, name: str, user_type: UserType = UserType.STUDENT, *, lazy=True, **kwargs) -> None:
+    def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, name: str = None, *, lazy=True, **kwargs) -> None:
         self._lectio = lectio
 
         self.id = user_id
@@ -97,7 +97,7 @@ class User:
     def populate(self) -> None:
         """Populate user object
 
-        Populates the user object with data from lectio, such as name, class name, etc.
+        Populates the user object me(with data from lectio, such as name, class name, etc.
         """
 
         if self.populated:
@@ -117,7 +117,7 @@ class User:
 
         if self.type == UserType.STUDENT:
             name_class = title.split(", ")
-            self.__name = name_class[0]
+            self.name = name_class[0]
 
             # Check if user has a class
             if len(name_class) > 1:
@@ -125,8 +125,8 @@ class User:
             else:
                 self.__class_name = None
 
-        # elif self.type == UserType.TEACHER:
-        #     self.__initials, self.__name, *_ = title.split(" - ")
+        elif self.type == UserType.TEACHER:
+            self.initials, self.name, *_ = title.split(" - ")
 
         src = soup.find(
             "img", {"id": "s_m_HeaderContent_picctrlthumbimage"}).get("src")
@@ -203,5 +203,45 @@ class User:
 
 
 class Me(User):
-    # TODO: Add methods for getting grades, absences, etc.
-    pass
+    """Class that represents the logged in user
+
+    This method extends the :class:`lectio.models.user.User` class,
+    and therefore has all the same methods and attributes.
+
+    Note:
+        This method can be created with the :meth:`lectio.Lectio.me` method.
+    """
+
+    _absence: 'Absence' = None
+
+    def __init__(self, lectio: 'Lectio', user_type: UserType = UserType.STUDENT) -> None:
+        super().__init__(lectio, None, user_type, lazy=False)
+
+    def populate(self) -> None:
+        r = self._lectio._request("forside.aspx")
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        content = soup.find(
+            'meta', {'name': 'msapplication-starturl'}).attrs.get('content')
+
+        self.id = re.match(r'.*id=([0-9]+)$', content)[1]
+
+        return super().populate()
+
+    def get_absences(self) -> Absence:
+        """Get absences
+
+        Returns:
+            class:`lectio.models.absence.Absence`: Absences for logged in user
+        """
+
+        if not self._absence:
+            self._absence = Absence(self._lectio)
+        else:
+            # Repopulate absences if they are cached
+            # This is done to make sure that the absences are up to date
+            self._absence._populate()
+
+        # Not cached as absences can change
+        return self._absence

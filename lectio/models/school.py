@@ -33,6 +33,7 @@ class School:
         self.__populate()
 
     def __populate(self) -> None:
+        # In the advanced schedule finder, we get all users, rooms and groups
         r = self._lectio._request("FindSkemaAdv.aspx")
 
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -48,7 +49,7 @@ class School:
             name = user.text.strip().split(" (")[0]
 
             self.students.append(
-                User(self._lectio, int(user["value"][1:]), name, UserType.STUDENT))
+                User(self._lectio, int(user["value"][1:]), UserType.STUDENT, name))
 
         # Get school's teachers
         self.teachers = []
@@ -59,7 +60,7 @@ class School:
             name = teacher_data[0]
             initials = teacher_data[1][:-1]
             self.teachers.append(
-                User(self._lectio, int(user["value"][1:]), name, UserType.TEACHER, initials=initials))
+                User(self._lectio, int(user["value"][1:]), UserType.TEACHER, name, initials=initials))
 
         # Get school's rooms
         self.rooms = []
@@ -69,12 +70,13 @@ class School:
             self.rooms.append(
                 Room(self._lectio, int(room["value"][2:]), room.text.strip()))
 
-    def get_user_by_id(self, user_id: int, user_type: UserType = None) -> User:
+    def get_user_by_id(self, user_id: int, user_type: UserType = None, lazy=False) -> User:
         """Gets a user by their id
 
         Args:
             user_id (int): The id of the user
             user_type (:class:`lectio.models.user.UserType`): The type of the user (student or teacher)
+            lazy (bool): Whether to return a lazy user object or not (default: False)
 
         Returns:
             :class:`lectio.models.user.User`: User object
@@ -88,15 +90,20 @@ class School:
         if user_type == UserType.STUDENT or user_type is None:
             for student in self.students:
                 if student.id == user_id:
+                    # Populate user if not lazy
+                    if not lazy:
+                        student.populate()
                     return student
 
         if user_type == UserType.TEACHER or user_type is None:
             for teacher in self.teachers:
                 if teacher.id == user_id:
+                    # Populate user if not lazy
+                    if not lazy:
+                        teacher.populate()
                     return teacher
 
-        raise exceptions.UserDoesNotExistError(
-            f"User with id {user_id} does not exist")
+        return User(self._lectio, user_id, user_type=user_type, lazy=lazy)
 
     def search_for_teachers_by_name(self, query: str) -> Generator[User, None, None]:
         """Search for teachers by name or initials
