@@ -19,7 +19,7 @@ class Absence:
         absences (List[SubjectAbsenceData]): List of absence data for each subject
     """
 
-    subjects: list['SubjectAbsenceData']
+    subjects: List['SubjectAbsenceData']
     total_absences: 'AbsenceData'
 
     def __init__(self, lectio: 'Lectio') -> None:
