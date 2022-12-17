@@ -37,7 +37,7 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
     Get all modules in specified time range.
 
     Parameters:
-        lectio (:class:`lectio.Lectio`): Base lectio object
+        lectio (Lectio): Base lectio object
         params (list): List of get parameters to add to request
         start_date (:class:`datetime.datetime`): Start date
         end_date (:class:`datetime.datetime`): End date
@@ -45,7 +45,7 @@ def get_schedule(lectio: 'Lectio', params: List[str], start_date: datetime, end_
             Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
 
     Returns:
-        List[:class:`lectio.Module`]: List containing all modules in specified time range.
+        List[Module]: List containing all modules in specified time range.
     """
 
     replacetime = {}

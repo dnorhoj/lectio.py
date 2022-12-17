@@ -87,7 +87,7 @@ class User:
     """User id"""
 
     type: UserType
-    """User type (UserType.STUDENT or UserType.TEACHER)"""
+    """User type"""
 
     def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, name: str = None, *, lazy=True, **kwargs) -> None:
         self._lectio = lectio
@@ -155,6 +155,9 @@ class User:
             end_date (:class:`datetime.datetime`): End date
             strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
                 Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
+
+        Returns:
+            List[Module]: List of modules
         """
 
         return get_schedule(
@@ -188,10 +191,10 @@ class User:
     def get_class_name(self) -> Optional[str]:
         """Get user's class name
 
-        Only for :class:`lectio.models.user.UserType.STUDENT`.
+        Only for :class:`UserType.STUDENT`.
 
         Returns:
-            str|None: Class name or ``None`` if user is :class:`lectio.models.user.UserType.TEACHER`.
+            str|None: Class name or ``None`` if user is :class:`UserType.TEACHER`.
         """
 
         if self.type == UserType.TEACHER:
@@ -241,7 +244,7 @@ class Me(User):
         """Get absences
 
         Returns:
-            class:`lectio.models.absence.Absence`: Absences for logged in user
+            Absence: Absences for logged in user
         """
 
         if not self._absence:

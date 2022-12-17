@@ -13,7 +13,7 @@ class Absence:
 
     Note:
         This class should not be instantiated directly,
-        but rather through the :attr:`lectio.models.user.Me.get_absences` method
+        but rather through the :meth:`lectio.models.user.Me.get_absences` method
     """
 
     subjects: List['SubjectAbsenceData']

@@ -92,14 +92,14 @@ class School:
 
         Args:
             user_id (int): The id of the user
-            user_type (:class:`lectio.models.user.UserType`): The type of the user (student or teacher)
+            user_type (:class:`~lectio.models.user.UserType`): The type of the user (student or teacher)
             lazy (bool): Whether to return a lazy user object or not (default: False)
 
         Returns:
-            :class:`lectio.models.user.User`: User object
+            User: User object
 
         Raises:
-            :class:`lectio.exceptions.UserDoesNotExistError`: When the user does not exist
+            exceptions.UserDoesNotExistError: When the user does not exist
         """
 
         user_id = int(user_id)
@@ -143,7 +143,7 @@ class School:
             query (str): Initials to search for
 
         Yields:
-            :class:`lectio.models.user.User`: Teacher object
+            User: Teacher user object
         """
 
         for teacher in self.teachers:
@@ -157,7 +157,7 @@ class School:
             query(str): Name to search for
 
         Yields:
-            :class: `lectio.models.user.User`: User object
+            User: Student user object
         """
 
         for student in self.students:
@@ -171,7 +171,7 @@ class School:
             query(str): Name to search for
 
         Yields:
-            :class: `lectio.models.user.User`: User object
+            User: User object
         """
 
         yield from self.search_for_students(query)
@@ -184,10 +184,10 @@ class School:
             room_id (int): The id of the room
 
         Returns:
-            :class:`lectio.models.room.Room`: Room object
+            Room: Room object
 
         Raises:
-            :class:`lectio.exceptions.RoomDoesNotExistError`: When the room does not exist
+            exceptions.RoomDoesNotExistError: When the room does not exist
         """
 
         room_id = int(room_id)
@@ -206,7 +206,7 @@ class School:
             query(str): Name to search for
 
         Yields:
-            :class: `lectio.models.room.Room`: Room object
+            Room: Room object
         """
 
         for room in self.rooms:

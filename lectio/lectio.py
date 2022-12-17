@@ -78,7 +78,7 @@ class Lectio:
         """Gets the authenticated user
 
         Returns:
-            :class:`lectio.models.user.Me`: Own user object
+            Me: Own user object
         """
 
         if self.__me is None:
@@ -92,7 +92,7 @@ class Lectio:
         This loads the school object, which gets cached for future use.
 
         Returns:
-            :class:`lectio.models.school.School`: School object
+            School: School object
         """
 
         if self.__school is None:
@@ -129,11 +129,3 @@ class Lectio:
                     "Could not restore session, probably incorrect credentials")
 
         return r
-
-    def log_out(self) -> None:
-        """Clears entire session, thereby logging you out
-
-        Returns:
-            None
-        """
-        self.__session = requests.Session()

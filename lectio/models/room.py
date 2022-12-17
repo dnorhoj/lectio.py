@@ -19,7 +19,7 @@ class Room:
         but rather through the :meth:`lectio.Lectio.get_room` method.
 
     Args:
-        lectio (:class:`lectio.Lectio`): Lectio object
+        lectio (Lectio): Lectio object
         id (int): Room id
         name (str): Room name
     """
@@ -42,6 +42,9 @@ class Room:
             end_date (:class:`datetime.datetime`): End date
             strip_time (bool): Whether to remove hours, minutes and seconds from date info, also adds 1 day to end time.
                 Basically just allows you to put in a random time of two days, and still get all modules from all the days including start and end date.
+
+        Returns:
+            List[Module]: List of modules
         """
 
         return get_schedule(
