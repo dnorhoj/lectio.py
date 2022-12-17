@@ -27,7 +27,10 @@ class UserType(Enum):
     """
 
     STUDENT = 0
+    """Student user type"""
+
     TEACHER = 1
+    """Teacher user type"""
 
     def get_str(self) -> str:
         """Get string representation of user type for lectio interface in english
@@ -69,17 +72,22 @@ class User:
         user_id (int): User id
         user_type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
         lazy (bool): Whether to not populate user object on instantiation (default: True)
-
-    Attributes:
-        id (int): User id
-        populated (bool): Whether user object has been populated with data from lectio
-                          if this is False, the user object is a lazy object and only contains available data (often just name and id)
-        type (:class:`lectio.models.user.UserType`): User type (UserType.STUDENT or UserType.TEACHER)
     """
 
     __class_name = None
     __image = None
-    populated = False
+
+    populated: bool = False
+    """Whether user object has been populated with data from lectio
+
+    If this is False, the user object is a lazy object and only contains available data (often just name and id)
+    """
+
+    id: int
+    """User id"""
+
+    type: UserType
+    """User type (UserType.STUDENT or UserType.TEACHER)"""
 
     def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, name: str = None, *, lazy=True, **kwargs) -> None:
         self._lectio = lectio

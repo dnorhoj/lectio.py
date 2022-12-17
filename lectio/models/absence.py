@@ -13,14 +13,14 @@ class Absence:
 
     Note:
         This class should not be instantiated directly,
-        but rather through the :attr:`lectio.models.user.Me.absences` method
-
-    Attributes:
-        absences (List[SubjectAbsenceData]): List of absence data for each subject
+        but rather through the :attr:`lectio.models.user.Me.get_absences` method
     """
 
     subjects: List['SubjectAbsenceData']
+    """List of absence data for each subject"""
+
     total_absences: 'AbsenceData'
+    """Total absence data (all subjects combined)"""
 
     def __init__(self, lectio: 'Lectio') -> None:
         self._lectio = lectio
@@ -114,12 +114,14 @@ class Absence:
         """Return a JSON representation of all the absence data
 
         Returns:
-            str: JSON representation of all the absence data in the following format:
+            str: JSON string of all the absence data in the following format:
 
-                {
-                    "subjects": [...],
-                    "total": {...}
-                }
+                .. code-block:: python
+
+                    {
+                        "subjects": [...]
+                        "total": {...}
+                    }
         """
 
         return json.dumps({

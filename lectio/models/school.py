@@ -18,15 +18,32 @@ class School:
         This class should not be instantiated directly,
         but rather through the :meth:`lectio.Lectio.get_school` method.
 
-    Args:
-        lectio (:class:`lectio.Lectio`): Lectio object
+    Example:
+        .. code-block:: python
+
+            import lectio
+
+            lectio = lectio.Lectio(123, "username", "password")
+
+            school = lectio.get_school()
+
+            print(school.name)
     """
 
     students: List[User]
+    """List of students in the school"""
+
     teachers: List[User]
+    """List of teachers in the school"""
+
     groups: List[None]
+    """List of groups in the school (TODO)"""
+
     rooms: List[Room]
+    """List of rooms in the school"""
+
     name: str
+    """Name of the school"""
 
     def __init__(self, lectio: 'Lectio') -> None:
         self._lectio = lectio

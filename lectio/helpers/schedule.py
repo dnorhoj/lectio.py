@@ -11,9 +11,16 @@ if TYPE_CHECKING:
 
 
 class ModuleStatus(Enum):
+    """Module status enum"""
+
     NORMAL = 0
+    """Module has not been changed"""
+
     CHANGED = 1
+    """Module has been changed (is green in lectio)"""
+
     CANCELLED = 2
+    """Module has been cancelled (is red in lectio)"""
 
     def __str__(self) -> str:
         if self.value == self.NORMAL.value:

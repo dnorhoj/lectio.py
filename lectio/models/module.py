@@ -49,7 +49,7 @@ class Module:
         """Get teacher
 
         Returns:
-            lectio.models.user.User: Teacher object
+            User: Teacher object
         """
 
         raise NotImplementedError("Not implemented yet")
@@ -58,7 +58,7 @@ class Module:
         """Get room
 
         Returns:
-            lectio.models.room.Room: Room object
+            Room: Room object
         """
 
         raise NotImplementedError("Not implemented yet")
