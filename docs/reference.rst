@@ -45,6 +45,14 @@ Misc
     :members:
     :undoc-members:
 
+.. autoclass:: lectio.models.absence.AbsenceData
+    :members:
+    :undoc-members:
+
+.. autoclass:: lectio.models.absence.SubjectAbsenceData
+    :members:
+    :undoc-members:
+
 Exceptions
 ==========
 

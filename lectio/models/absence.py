@@ -16,11 +16,11 @@ class Absence:
         but rather through the :meth:`lectio.models.user.Me.get_absences` method
     """
 
+    #: List of absence data for each subject
     subjects: List['SubjectAbsenceData']
-    """List of absence data for each subject"""
 
+    #: Total absence data (all subjects combined
     total_absences: 'AbsenceData'
-    """Total absence data (all subjects combined)"""
 
     def __init__(self, lectio: 'Lectio') -> None:
         self._lectio = lectio
@@ -154,39 +154,37 @@ def _parse_multiple_absence_percentage(cols: List[str]) -> Union[Tuple[int, int,
 
 @dataclass
 class AbsenceData:
-    """Class for representing a subject absence
-
-    Attributes:
-        physical_total (int): Total physical absence
-        physical_absent (int): Physical absence
-        physical_percentage (float): Physical absence percentage
-        physical_calculated_total (int): Calculated total physical absence
-        physical_calculated_absent (int): Calculated physical absence
-        physical_calculated_percentage (float): Calculated physical absence percentage
-        assignment_total (int): Total assignment absence
-        assignment_absent (int): Assignment absence
-        assignment_percentage (float): Assignment absence percentage
-        assignment_calculated_total (int): Calculated total assignment absence
-        assignment_calculated_absent (int): Calculated assignment absence
-        assignment_calculated_percentage (float): Calculated assignment absence percentage
-    """
+    """Class for representing a subject absence"""
 
     # Physical absence
+
+    #: Total number of modules for the entire year
     physical_total: int
+    #: Number of modules absent for the entire year
     physical_absent: int
+    #: Percentage of modules absent for the entire year
     physical_percentage: float
 
+    #: Total number of modules until the current date
     physical_calculated_total: int
+    #: Total number of modules absent until the current date
     physical_calculated_absent: int
+    #: Percentage of modules absent until the current date
     physical_calculated_percentage: float
 
     # Assignment absence
+    #: Total number of student hours (elevtimer) for the entire year
     assignment_total: int
+    #: Total number of student hours absent for the entire year
     assignment_absent: int
+    #: Percentage of student hours absent for the entire year
     assignment_percentage: float
 
+    #: Total number of student hours until the current date
     assignment_calculated_total: int
+    #: Total number of student hours absent until the current date
     assignment_calculated_absent: int
+    #: Percentage of student hours absent until the current date
     assignment_calculated_percentage: float
 
     def __iter__(self):
@@ -195,16 +193,15 @@ class AbsenceData:
 
 @dataclass
 class SubjectAbsenceData():
-    """Class for representing a subject absence
+    """Class for representing a subject absence"""
 
-    Attributes:
-        subject (str): Subject name
-        group_id (int): Group id
-        absence_data (AbsenceData): Absence data
-    """
-
+    #: Subject name
     subject: str
+
+    #: Group id
     group_id: int
+
+    #: Absence data
     absence_data: AbsenceData
 
     @property

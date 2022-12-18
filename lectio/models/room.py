@@ -16,7 +16,7 @@ class Room:
 
     Note:
         This class should not be instantiated directly,
-        but rather through the :meth:`lectio.Lectio.get_room` method.
+        but rather through the :meth:`lectio.school.School.get_rooms` method.
 
     Args:
         lectio (Lectio): Lectio object

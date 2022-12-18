@@ -30,20 +30,20 @@ class School:
             print(school.name)
     """
 
+    #: List of students in the school
     students: List[User]
-    """List of students in the school"""
 
+    #: List of teachers in the school
     teachers: List[User]
-    """List of teachers in the school"""
 
+    #: List of groups in the school (TODO
     groups: List[None]
-    """List of groups in the school (TODO)"""
 
+    #: List of rooms in the school
     rooms: List[Room]
-    """List of rooms in the school"""
 
+    #: Name of the school
     name: str
-    """Name of the school"""
 
     def __init__(self, lectio: 'Lectio') -> None:
         self._lectio = lectio

@@ -17,7 +17,7 @@ a Danish school management system.
 Information
 -----------
 
-**Useful links:** :doc:`/installation` | :doc:`/quickstart`
+**Useful links:** :doc:`/installation` | :doc:`/examples`
 
 **Reference:** :doc:`/reference`
 
@@ -28,5 +28,5 @@ Table of contents
    :maxdepth: 2
 
    installation
-   quickstart
+   examples
    reference

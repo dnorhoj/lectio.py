@@ -26,11 +26,11 @@ class UserType(Enum):
         True
     """
 
+    #: Student user type
     STUDENT = 0
-    """Student user type"""
 
+    #: Teacher user type
     TEACHER = 1
-    """Teacher user type"""
 
     def get_str(self) -> str:
         """Get string representation of user type for lectio interface in english
@@ -77,17 +77,17 @@ class User:
     __class_name = None
     __image = None
 
-    populated: bool = False
+    populated: bool
     """Whether user object has been populated with data from lectio
 
     If this is False, the user object is a lazy object and only contains available data (often just name and id)
     """
 
+    #: User id
     id: int
-    """User id"""
 
+    #: User type
     type: UserType
-    """User type"""
 
     def __init__(self, lectio: 'Lectio', user_id: int, user_type: UserType = UserType.STUDENT, name: str = None, *, lazy=True, **kwargs) -> None:
         self._lectio = lectio
@@ -99,13 +99,14 @@ class User:
         self.initials = kwargs.get('initials')
 
         # Populate ovject if specified as non-lazy
+        self.populated = False
         if not lazy:
             self.populate()
 
     def populate(self) -> None:
         """Populate user object
 
-        Populates the user object me(with data from lectio, such as name, class name, etc.
+        Populates the user object with data from lectio, such as name, class name, etc.
         """
 
         if self.populated:
@@ -149,6 +150,8 @@ class User:
             As lectio is weird, you can only get a schedule for a range
             that is less than one month.
             If you specify a range greater than one month, you will get an empty return list.
+
+        TODO: Make this work for ranges greater than one month
 
         Args:
             start_date (:class:`datetime.datetime`): Start date
