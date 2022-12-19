@@ -44,7 +44,7 @@ class Lectio:
         if username is None or password is None:
             username, password = self.__CREDS
 
-        self.log_out()  # Clear session
+        self.__session = requests.Session()  # Clear session
 
         URL = f"https://www.lectio.dk/lectio/{self.inst_id}/login.aspx"
 
