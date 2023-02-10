@@ -1,3 +1,9 @@
+# Looking for a new maintainer
+
+I am graduating in summer, and therefore the continued development of lectio.py will stop. (It has been halted for a while as I don't have motivation as I'm not going to be able to use it in a few months.)
+
+You can find my contact details in my [GitHub profile](https://github.com/dnorhoj) if you want to continue the development!
+
 # lectio.py
 
 [![License](https://img.shields.io/github/license/dnorhoj/lectio.py)](LICENSE)
