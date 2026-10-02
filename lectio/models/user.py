@@ -3,10 +3,12 @@ from bs4 import BeautifulSoup
 from typing import TYPE_CHECKING, List
 
 from ..helpers.schedule import get_schedule
+from ..helpers.assignments import get_assignments
 
 if TYPE_CHECKING:
     from datetime import datetime
     from ..helpers.schedule import Module
+    from ..helpers.assignments import Assignment
     from ..lectio import Lectio
 
 
@@ -193,4 +195,12 @@ class User:
 
 class Me(User):
     # TODO: Add methods for getting grades, absences, etc.
-    pass
+
+    def get_assignments(self) -> List['Assignment']:
+        """Get all assignments for the authenticated user
+
+        Returns:
+            list(:class:`lectio.helpers.assignments.Assignment`): List of assignments
+        """
+
+        return get_assignments(self._lectio, self.id)

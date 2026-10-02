@@ -33,3 +33,7 @@ Misc
 .. autoclass:: lectio.helpers.schedule.Module
     :members:
     :undoc-members:
+
+.. autoclass:: lectio.helpers.assignments.Assignment
+    :members:
+    :undoc-members:

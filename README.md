@@ -37,13 +37,18 @@ For a quickstart guide as well as some examples, you can read the documentation 
 * [x] User info
 * [ ] Absence
 * [ ] Mail
-* [ ] Assignments
+* [x] Assignments
 * [ ] Homework
 * [ ] Surveys (Probably not going to be implemented)
 * [ ] Grades
 * [ ] Search for students / teachers
 
 </details>
+
+## Contributions by [MrFawsDK](https://github.com/MrFawsDK)
+
+* Added assignments (`Me.get_assignments()`), which returns a list of `Assignment` objects
+  with title, subject, deadline, student time, status, grade and more.
 
 ## Todo
 
